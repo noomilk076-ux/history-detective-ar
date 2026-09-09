@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
+
+  <meta charset="UTF-8">
 
   <meta
     name="viewport"
@@ -9,11 +11,12 @@
              initial-scale=1,
              maximum-scale=1,
              user-scalable=no"
-  />
+  >
 
   <title>History Detective AR</title>
 
   <style>
+
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
@@ -21,30 +24,46 @@
 
     html,
     body {
+
       margin: 0;
       padding: 0;
+
       width: 100%;
       height: 100%;
+
       overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
+
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
       background: #07111f;
       color: white;
     }
 
+
     #app {
+
       position: relative;
+
       width: 100%;
       height: 100%;
+
       overflow: hidden;
     }
 
-    /* --------------------------------------------------
+
+    /* ==================================================
        CAMERA
-    -------------------------------------------------- */
+    ================================================== */
 
     #camera {
+
       position: absolute;
+
       inset: 0;
 
       width: 100%;
@@ -57,25 +76,32 @@
       background: #000;
     }
 
-    /* --------------------------------------------------
-       LANDMARK CANVAS
-    -------------------------------------------------- */
+
+    /* ==================================================
+       CANVAS
+    ================================================== */
 
     #overlay {
+
       position: absolute;
+
       inset: 0;
 
       width: 100%;
       height: 100%;
 
       pointer-events: none;
+
+      z-index: 3;
     }
 
-    /* --------------------------------------------------
-       TOP UI
-    -------------------------------------------------- */
+
+    /* ==================================================
+       TOP BAR
+    ================================================== */
 
     #topBar {
+
       position: absolute;
 
       top: 0;
@@ -83,43 +109,104 @@
       right: 0;
 
       padding:
-        env(safe-area-inset-top)
-        18px
-        14px
-        18px;
+        calc(12px + env(safe-area-inset-top))
+        20px
+        16px;
 
       background:
         linear-gradient(
-          rgba(0,0,0,.70),
-          rgba(0,0,0,.10)
+          rgba(0,0,0,.78),
+          rgba(0,0,0,.08)
         );
 
-      z-index: 10;
+      z-index: 20;
     }
+
 
     #title {
-      font-size: clamp(20px, 4vw, 32px);
+
+      font-size:
+        clamp(22px, 4vw, 34px);
+
       font-weight: 800;
-      letter-spacing: .5px;
     }
+
 
     #status {
+
       margin-top: 5px;
 
-      font-size: clamp(13px, 2.5vw, 18px);
+      font-size:
+        clamp(14px, 2.5vw, 20px);
 
-      opacity: .9;
+      opacity: .95;
     }
 
-    /* --------------------------------------------------
-       CENTER POINTER
-    -------------------------------------------------- */
 
-    #pointer {
+    /* ==================================================
+       MOVEMENT DISPLAY
+    ================================================== */
+
+    #movement {
+
       position: absolute;
 
-      width: 52px;
-      height: 52px;
+      left: 50%;
+      top: 25%;
+
+      transform: translate(-50%, -50%);
+
+      z-index: 15;
+
+      text-align: center;
+
+      pointer-events: none;
+    }
+
+
+    #movementIcon {
+
+      font-size:
+        clamp(60px, 12vw, 120px);
+
+      line-height: 1;
+
+      filter:
+        drop-shadow(0 8px 20px rgba(0,0,0,.45));
+    }
+
+
+    #movementText {
+
+      margin-top: 10px;
+
+      padding:
+        10px 22px;
+
+      border-radius: 18px;
+
+      background:
+        rgba(0,0,0,.60);
+
+      backdrop-filter: blur(8px);
+
+      font-size:
+        clamp(22px, 5vw, 40px);
+
+      font-weight: 900;
+    }
+
+
+    /* ==================================================
+       POINTER
+    ================================================== */
+
+    #pointer {
+
+      position: absolute;
+
+      width: 54px;
+      height: 54px;
 
       border-radius: 50%;
 
@@ -129,45 +216,81 @@
         radial-gradient(
           circle,
           rgba(255,255,255,.95) 0 7px,
-          rgba(255,255,255,.20) 8px 100%
+          rgba(255,255,255,.18) 8px 100%
         );
 
       box-shadow:
-        0 0 18px rgba(255,255,255,.8);
+        0 0 22px rgba(255,255,255,.9);
 
       transform:
         translate(-50%, -50%);
 
-      z-index: 20;
-
       pointer-events: none;
+
+      z-index: 30;
 
       display: none;
     }
 
+
     #pointer.locked {
+
       border-color: #ffd166;
 
       box-shadow:
-        0 0 25px rgba(255,209,102,.95);
+        0 0 30px rgba(255,209,102,1);
     }
 
-    /* --------------------------------------------------
+
+    /* ==================================================
+       DEBUG PANEL
+    ================================================== */
+
+    #debug {
+
+      position: absolute;
+
+      right: 14px;
+      top: 100px;
+
+      z-index: 25;
+
+      padding: 12px 14px;
+
+      border-radius: 15px;
+
+      background:
+        rgba(0,0,0,.68);
+
+      backdrop-filter: blur(8px);
+
+      font-size: 12px;
+
+      line-height: 1.6;
+
+      min-width: 190px;
+
+      pointer-events: none;
+    }
+
+
+    /* ==================================================
        TEST CONTROLS
-    -------------------------------------------------- */
+    ================================================== */
 
     #controls {
+
       position: absolute;
 
       left: 0;
       right: 0;
+
       bottom: 0;
 
       padding:
-        18px
-        18px
-        calc(18px + env(safe-area-inset-bottom))
-        18px;
+        16px
+        16px
+        calc(16px + env(safe-area-inset-bottom));
 
       display: flex;
 
@@ -175,87 +298,97 @@
 
       gap: 12px;
 
-      z-index: 15;
+      z-index: 20;
     }
 
+
     .control {
+
       min-width: 150px;
 
-      padding: 16px 22px;
+      padding: 15px 20px;
 
       border-radius: 18px;
 
-      border: 2px solid rgba(255,255,255,.35);
+      border:
+        2px solid rgba(255,255,255,.30);
 
       background:
-        rgba(10,20,35,.82);
+        rgba(7,17,31,.82);
 
       color: white;
 
-      font-size: clamp(16px, 3vw, 22px);
+      font-size:
+        clamp(15px, 3vw, 21px);
 
-      font-weight: 700;
+      font-weight: 800;
 
       text-align: center;
 
-      box-shadow:
-        0 8px 30px rgba(0,0,0,.35);
-
       transition:
-        transform .12s ease,
-        background .12s ease,
-        border-color .12s ease;
+        .15s ease;
     }
 
+
     .control.hover {
-      background: rgba(255,209,102,.25);
 
       border-color: #ffd166;
 
-      transform: scale(1.06);
+      background:
+        rgba(255,209,102,.25);
+
+      transform: scale(1.05);
     }
 
+
     .control.selected {
-      background: rgba(70,220,140,.40);
 
       border-color: #46dc8c;
+
+      background:
+        rgba(70,220,140,.35);
 
       transform: scale(1.08);
     }
 
-    /* --------------------------------------------------
+
+    /* ==================================================
        START SCREEN
-    -------------------------------------------------- */
+    ================================================== */
 
     #startScreen {
+
       position: absolute;
 
       inset: 0;
 
-      z-index: 50;
+      z-index: 100;
 
       display: flex;
 
       align-items: center;
-
       justify-content: center;
 
-      padding: 30px;
+      padding: 25px;
 
       background:
         radial-gradient(
           circle at center,
-          rgba(31,64,96,.92),
-          rgba(3,10,18,.98)
+          rgba(37,74,108,.96),
+          rgba(2,8,15,.99)
         );
     }
 
+
     #startCard {
-      width: min(720px, 100%);
 
-      padding: 36px;
+      width:
+        min(760px, 100%);
 
-      border-radius: 28px;
+      padding:
+        clamp(25px, 5vw, 45px);
+
+      border-radius: 30px;
 
       background:
         rgba(255,255,255,.08);
@@ -263,29 +396,39 @@
       border:
         1px solid rgba(255,255,255,.18);
 
-      backdrop-filter: blur(12px);
+      backdrop-filter:
+        blur(14px);
 
       text-align: center;
     }
 
-    #startCard h1 {
-      margin: 0 0 12px;
 
-      font-size: clamp(30px, 7vw, 56px);
+    #startCard h1 {
+
+      margin: 0 0 14px;
+
+      font-size:
+        clamp(30px, 7vw, 58px);
     }
+
 
     #startCard p {
-      font-size: clamp(16px, 3vw, 22px);
 
-      line-height: 1.6;
+      margin: 8px 0;
 
-      opacity: .9;
+      font-size:
+        clamp(16px, 3vw, 23px);
+
+      line-height: 1.65;
     }
 
-    #startButton {
-      margin-top: 18px;
 
-      padding: 17px 34px;
+    #startButton {
+
+      margin-top: 20px;
+
+      padding:
+        17px 35px;
 
       border: 0;
 
@@ -295,70 +438,144 @@
 
       color: #201500;
 
-      font-size: 20px;
+      font-size: 21px;
 
-      font-weight: 800;
+      font-weight: 900;
 
       cursor: pointer;
     }
 
-    #startButton:active {
-      transform: scale(.97);
-    }
 
-    /* --------------------------------------------------
-       DEBUG PANEL
-    -------------------------------------------------- */
+    /* ==================================================
+       CALIBRATION
+    ================================================== */
 
-    #debug {
+    #calibration {
+
       position: absolute;
 
-      right: 12px;
-      top: 90px;
+      inset: 0;
 
-      z-index: 30;
+      z-index: 90;
 
-      padding: 10px 12px;
+      display: none;
 
-      border-radius: 12px;
+      align-items: center;
+      justify-content: center;
 
-      background: rgba(0,0,0,.65);
+      background:
+        rgba(3,10,18,.82);
 
-      font-size: 12px;
+      backdrop-filter:
+        blur(8px);
 
-      line-height: 1.5;
+      text-align: center;
 
-      max-width: 260px;
+      padding: 25px;
     }
 
-    /* --------------------------------------------------
+
+    #calibrationCard {
+
+      width:
+        min(700px, 100%);
+
+      padding: 35px;
+
+      border-radius: 28px;
+
+      background:
+        rgba(255,255,255,.10);
+
+      border:
+        1px solid rgba(255,255,255,.2);
+    }
+
+
+    #calibrationIcon {
+
+      font-size: 75px;
+    }
+
+
+    #calibrationTitle {
+
+      font-size:
+        clamp(28px, 6vw, 48px);
+
+      font-weight: 900;
+
+      margin-top: 12px;
+    }
+
+
+    #calibrationInstruction {
+
+      font-size:
+        clamp(16px, 3vw, 23px);
+
+      line-height: 1.6;
+
+      margin-top: 12px;
+    }
+
+
+    #countdown {
+
+      margin-top: 20px;
+
+      font-size:
+        clamp(50px, 12vw, 100px);
+
+      font-weight: 900;
+
+      color: #ffd166;
+    }
+
+
+    /* ==================================================
        RESPONSIVE
-    -------------------------------------------------- */
+    ================================================== */
 
     @media (max-width: 700px) {
 
       #controls {
+
         flex-direction: column;
 
         align-items: center;
       }
 
       .control {
-        width: min(420px, 90vw);
+
+        width:
+          min(420px, 90vw);
       }
 
       #debug {
-        display: none;
+
+        font-size: 10px;
+
+        min-width: 150px;
+
+        opacity: .85;
       }
+
     }
+
   </style>
+
 </head>
+
 
 <body>
 
+
 <div id="app">
 
+
   <!-- CAMERA -->
+
   <video
     id="camera"
     autoplay
@@ -366,13 +583,21 @@
     muted
   ></video>
 
-  <!-- LANDMARKS -->
-  <canvas id="overlay"></canvas>
+
+  <!-- DEBUG CANVAS -->
+
+  <canvas
+    id="overlay"
+  ></canvas>
+
 
   <!-- POINTER -->
+
   <div id="pointer"></div>
 
-  <!-- TOP UI -->
+
+  <!-- TOP -->
+
   <div id="topBar">
 
     <div id="title">
@@ -385,19 +610,65 @@
 
   </div>
 
-  <!-- DEBUG -->
-  <div id="debug">
-    รอการตรวจจับ...
+
+  <!-- MOVEMENT -->
+
+  <div id="movement">
+
+    <div id="movementIcon">
+      🧍
+    </div>
+
+    <div id="movementText">
+      รอเริ่มภารกิจ
+    </div>
+
   </div>
 
-  <!-- TEST BUTTONS -->
+
+  <!-- DEBUG -->
+
+  <div id="debug">
+
+    <b>ระบบตรวจจับ</b>
+
+    <br>
+
+    ร่างกาย:
+    <span id="bodyState">–</span>
+
+    <br>
+
+    การเดิน:
+    <span id="walkState">–</span>
+
+    <br>
+
+    การหัน:
+    <span id="turnState">–</span>
+
+    <br>
+
+    ก้าว:
+    <span id="stepCount">0</span>
+
+    <br>
+
+    ความมั่นใจ:
+    <span id="confidence">–</span>
+
+  </div>
+
+
+  <!-- TEST CONTROLS -->
+
   <div id="controls">
 
     <div
       class="control"
       data-action="left"
     >
-      ⬅️ เดินซ้าย
+      ↩️ หันซ้าย
     </div>
 
     <div
@@ -411,12 +682,14 @@
       class="control"
       data-action="right"
     >
-      เดินขวา ➡️
+      หันขวา ↪️
     </div>
 
   </div>
 
+
   <!-- START -->
+
   <div id="startScreen">
 
     <div id="startCard">
@@ -426,41 +699,88 @@
       </h1>
 
       <p>
-        ยืนหน้ากล้องประมาณ 1–2 เมตร
-        <br>
-        แล้วยกมือขึ้น
-        <br>
-        ใช้นิ้วชี้เพื่อควบคุมเคอร์เซอร์
+        ระบบจะใช้กล้องตรวจจับการเคลื่อนไหวของร่างกาย
+      </p>
+
+      <p>
+        🚶 เดินอยู่กับที่ = เดินในเกม
+      </p>
+
+      <p>
+        ↩️ หันตัว = หันมุมมอง
+      </p>
+
+      <p>
+        ☝️ นิ้วชี้ = เลือกเบาะแส
       </p>
 
       <button id="startButton">
-        🎥 เริ่มภารกิจ
+        🎥 เริ่มระบบตรวจจับ
       </button>
 
     </div>
 
   </div>
 
+
+  <!-- CALIBRATION -->
+
+  <div id="calibration">
+
+    <div id="calibrationCard">
+
+      <div id="calibrationIcon">
+        🧍
+      </div>
+
+      <div id="calibrationTitle">
+        เตรียมตัวนักสืบ
+      </div>
+
+      <div id="calibrationInstruction">
+
+        ยืนตรงกลางหน้ากล้อง<br>
+
+        มองตรง<br>
+
+        วางแขนสบาย ๆ<br>
+
+        และอยู่นิ่ง ๆ
+
+      </div>
+
+      <div id="countdown">
+        3
+      </div>
+
+    </div>
+
+  </div>
+
+
 </div>
 
 
 <script type="module">
+
 
 /* ======================================================
    MEDIAPIPE
 ====================================================== */
 
 import {
+
   HandLandmarker,
   PoseLandmarker,
   FilesetResolver
+
 }
 from
 "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
 
 
 /* ======================================================
-   DOM
+   ELEMENTS
 ====================================================== */
 
 const video =
@@ -478,49 +798,69 @@ const pointer =
 const status =
   document.getElementById("status");
 
-const debug =
-  document.getElementById("debug");
-
 const startScreen =
   document.getElementById("startScreen");
 
 const startButton =
   document.getElementById("startButton");
 
+const calibration =
+  document.getElementById("calibration");
+
+const countdown =
+  document.getElementById("countdown");
+
+const movementIcon =
+  document.getElementById("movementIcon");
+
+const movementText =
+  document.getElementById("movementText");
+
+const bodyState =
+  document.getElementById("bodyState");
+
+const walkState =
+  document.getElementById("walkState");
+
+const turnState =
+  document.getElementById("turnState");
+
+const stepCountElement =
+  document.getElementById("stepCount");
+
+const confidenceElement =
+  document.getElementById("confidence");
+
 const controls =
   [...document.querySelectorAll(".control")];
 
 
 /* ======================================================
-   MEDIAPIPE OBJECTS
+   MEDIAPIPE
 ====================================================== */
 
 let handLandmarker = null;
 
 let poseLandmarker = null;
 
+
+/* ======================================================
+   STATE
+====================================================== */
+
 let running = false;
 
 let lastVideoTime = -1;
 
+let calibrationData = null;
 
-/* ======================================================
-   CONSTANTS
-====================================================== */
+let calibrationSamples = [];
 
-const HAND_MODEL =
-"https://storage.googleapis.com/mediapipe-models/" +
-"hand_landmarker/hand_landmarker/float16/1/" +
-"hand_landmarker.task";
-
-const POSE_MODEL =
-"https://storage.googleapis.com/mediapipe-models/" +
-"pose_landmarker/pose_landmarker_lite/float16/1/" +
-"pose_landmarker_lite.task";
+let calibrating = false;
 
 
 /* ======================================================
-   POINTER STATE
+   POINTER
 ====================================================== */
 
 let pointerX = 0;
@@ -531,9 +871,11 @@ let smoothX = 0;
 
 let smoothY = 0;
 
+const POINTER_SMOOTHING = 0.25;
+
 
 /* ======================================================
-   HOVER / SELECT STATE
+   SELECTION
 ====================================================== */
 
 let hoveredControl = null;
@@ -544,10 +886,49 @@ let selectionLocked = false;
 
 
 /* ======================================================
-   SMOOTHING
+   WALK DETECTION
 ====================================================== */
 
-const SMOOTHING = 0.25;
+const ankleHistory = [];
+
+const MAX_HISTORY = 30;
+
+let stepCount = 0;
+
+let lastStepTime = 0;
+
+let leftFootUp = false;
+
+let rightFootUp = false;
+
+
+/* ======================================================
+   TURN DETECTION
+====================================================== */
+
+let turnHistory = [];
+
+const MAX_TURN_HISTORY = 15;
+
+let currentTurn = "NONE";
+
+let turnScore = 0;
+
+
+/* ======================================================
+   MODEL URL
+====================================================== */
+
+const HAND_MODEL =
+"https://storage.googleapis.com/mediapipe-models/" +
+"hand_landmarker/hand_landmarker/float16/1/" +
+"hand_landmarker.task";
+
+
+const POSE_MODEL =
+"https://storage.googleapis.com/mediapipe-models/" +
+"pose_landmarker/pose_landmarker_lite/float16/1/" +
+"pose_landmarker_lite.task";
 
 
 /* ======================================================
@@ -571,7 +952,8 @@ async function startExperience() {
     startButton.disabled = true;
 
     status.textContent =
-      "กำลังโหลดระบบตรวจจับร่างกาย...";
+      "กำลังโหลดระบบตรวจจับ...";
+
 
     const vision =
       await FilesetResolver.forVisionTasks(
@@ -585,26 +967,38 @@ async function startExperience() {
     -------------------------------------------------- */
 
     status.textContent =
-      "กำลังเตรียมระบบตรวจจับนิ้ว...";
+      "กำลังโหลดระบบนิ้วชี้...";
+
 
     handLandmarker =
       await HandLandmarker.createFromOptions(
         vision,
         {
+
           baseOptions: {
-            modelAssetPath: HAND_MODEL,
-            delegate: "GPU"
+
+            modelAssetPath:
+              HAND_MODEL,
+
+            delegate:
+              "GPU"
           },
 
-          runningMode: "VIDEO",
+          runningMode:
+            "VIDEO",
 
-          numHands: 1,
+          numHands:
+            1,
 
-          minHandDetectionConfidence: 0.55,
+          minHandDetectionConfidence:
+            0.55,
 
-          minHandPresenceConfidence: 0.55,
+          minHandPresenceConfidence:
+            0.55,
 
-          minTrackingConfidence: 0.55
+          minTrackingConfidence:
+            0.55
+
         }
       );
 
@@ -614,26 +1008,38 @@ async function startExperience() {
     -------------------------------------------------- */
 
     status.textContent =
-      "กำลังเตรียมระบบตรวจจับร่างกาย...";
+      "กำลังโหลดระบบร่างกาย...";
+
 
     poseLandmarker =
       await PoseLandmarker.createFromOptions(
         vision,
         {
+
           baseOptions: {
-            modelAssetPath: POSE_MODEL,
-            delegate: "GPU"
+
+            modelAssetPath:
+              POSE_MODEL,
+
+            delegate:
+              "GPU"
           },
 
-          runningMode: "VIDEO",
+          runningMode:
+            "VIDEO",
 
-          numPoses: 1,
+          numPoses:
+            1,
 
-          minPoseDetectionConfidence: 0.5,
+          minPoseDetectionConfidence:
+            0.5,
 
-          minPosePresenceConfidence: 0.5,
+          minPosePresenceConfidence:
+            0.5,
 
-          minTrackingConfidence: 0.5
+          minTrackingConfidence:
+            0.5
+
         }
       );
 
@@ -643,13 +1049,17 @@ async function startExperience() {
     -------------------------------------------------- */
 
     status.textContent =
-      "กำลังขอสิทธิ์ใช้กล้อง...";
+      "กำลังขออนุญาตใช้กล้อง...";
+
 
     const stream =
       await navigator.mediaDevices.getUserMedia(
         {
+
           video: {
-            facingMode: "user",
+
+            facingMode:
+              "user",
 
             width: {
               ideal: 1280
@@ -658,39 +1068,49 @@ async function startExperience() {
             height: {
               ideal: 720
             }
+
           },
 
-          audio: false
+          audio:
+            false
+
         }
       );
 
 
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
+
 
     await video.play();
 
 
-    /* --------------------------------------------------
-       HIDE START SCREEN
-    -------------------------------------------------- */
-
-    startScreen.style.display =
-      "none";
-
-
-    status.textContent =
-      "พร้อมแล้ว! ยกมือขึ้นแล้วชี้นิ้ว";
-
-
-    running = true;
-
-
     resizeCanvas();
+
 
     window.addEventListener(
       "resize",
       resizeCanvas
     );
+
+
+    startScreen.style.display =
+      "none";
+
+
+    /*
+     * Calibration
+     */
+
+    await runCalibration();
+
+
+    running =
+      true;
+
+
+    status.textContent =
+      "พร้อมแล้ว! ลองเดินอยู่กับที่";
 
 
     requestAnimationFrame(
@@ -704,42 +1124,333 @@ async function startExperience() {
     console.error(error);
 
     status.textContent =
-      "เปิดกล้องหรือระบบตรวจจับไม่สำเร็จ";
+      "ไม่สามารถเริ่มระบบได้";
 
-    startButton.disabled = false;
+    startButton.disabled =
+      false;
 
     startButton.textContent =
       "ลองอีกครั้ง";
 
     alert(
-      "ไม่สามารถเปิดกล้องได้\n\n" +
-      "กรุณาอนุญาตการใช้กล้อง แล้วลองใหม่อีกครั้ง"
+      "เปิดกล้องหรือระบบตรวจจับไม่สำเร็จ\n\n" +
+      "กรุณาอนุญาตการใช้กล้อง แล้วลองใหม่"
     );
+
   }
+
 }
 
 
 /* ======================================================
-   RESIZE CANVAS
+   CALIBRATION
 ====================================================== */
 
-function resizeCanvas() {
+async function runCalibration() {
 
-  canvas.width =
-    window.innerWidth;
+  calibrating =
+    true;
 
-  canvas.height =
-    window.innerHeight;
+  calibration.style.display =
+    "flex";
+
+  calibrationSamples = [];
+
+
+  for (
+    let i = 3;
+    i >= 1;
+    i--
+  ) {
+
+    countdown.textContent =
+      i;
+
+    await wait(1000);
+
+  }
+
+
+  countdown.textContent =
+    "เก็บข้อมูล";
+
+
+  /*
+   * เก็บประมาณ 1.5 วินาที
+   */
+
+  const start =
+    performance.now();
+
+
+  while (
+    performance.now() -
+    start <
+    1500
+  ) {
+
+    if (
+      video.readyState >= 2
+    ) {
+
+      const result =
+        poseLandmarker.detectForVideo(
+          video,
+          performance.now()
+        );
+
+
+      if (
+        result &&
+        result.landmarks &&
+        result.landmarks.length
+      ) {
+
+        const pose =
+          result.landmarks[0];
+
+
+        const sample =
+          extractBodyData(
+            pose
+          );
+
+
+        if (sample) {
+
+          calibrationSamples.push(
+            sample
+          );
+
+        }
+
+      }
+
+    }
+
+    await wait(50);
+
+  }
+
+
+  calibrationData =
+    calculateCalibration(
+      calibrationSamples
+    );
+
+
+  calibration.style.display =
+    "none";
+
+  calibrating =
+    false;
+
+
+  movementIcon.textContent =
+    "🧍";
+
+  movementText.textContent =
+    "พร้อมแล้ว";
+
+
+  status.textContent =
+    "ยืนตรงกลางได้เลยค่ะ";
+
 }
 
 
 /* ======================================================
-   DETECTION LOOP
+   CALIBRATION CALCULATION
 ====================================================== */
 
-async function detectFrame() {
+function calculateCalibration(
+  samples
+) {
 
-  if (!running) return;
+  if (
+    samples.length === 0
+  ) {
+
+    return {
+
+      shoulderWidth:
+        0.25,
+
+      hipWidth:
+        0.20,
+
+      torsoX:
+        0.5,
+
+      shoulderDepth:
+        0
+
+    };
+
+  }
+
+
+  const average =
+    key =>
+      samples.reduce(
+        (sum, item) =>
+          sum + item[key],
+        0
+      ) / samples.length;
+
+
+  return {
+
+    shoulderWidth:
+      average("shoulderWidth"),
+
+    hipWidth:
+      average("hipWidth"),
+
+    torsoX:
+      average("torsoX"),
+
+    shoulderDepth:
+      average("shoulderDepth")
+
+  };
+
+}
+
+
+/* ======================================================
+   EXTRACT BODY DATA
+====================================================== */
+
+function extractBodyData(
+  pose
+) {
+
+  const leftShoulder =
+    pose[11];
+
+  const rightShoulder =
+    pose[12];
+
+  const leftHip =
+    pose[23];
+
+  const rightHip =
+    pose[24];
+
+  const leftAnkle =
+    pose[27];
+
+  const rightAnkle =
+    pose[28];
+
+  const nose =
+    pose[0];
+
+
+  if (
+    !leftShoulder ||
+    !rightShoulder ||
+    !leftHip ||
+    !rightHip
+  ) {
+
+    return null;
+
+  }
+
+
+  const shoulderWidth =
+    distance2D(
+      leftShoulder,
+      rightShoulder
+    );
+
+
+  const hipWidth =
+    distance2D(
+      leftHip,
+      rightHip
+    );
+
+
+  const torsoX =
+    (
+      leftShoulder.x +
+      rightShoulder.x +
+      leftHip.x +
+      rightHip.x
+    ) / 4;
+
+
+  /*
+   * Difference in shoulder depth.
+   *
+   * This becomes one of the
+   * signals for turning.
+   */
+
+  const shoulderDepth =
+    rightShoulder.z -
+    leftShoulder.z;
+
+
+  const ankleLeftY =
+    leftAnkle
+      ? leftAnkle.y
+      : null;
+
+
+  const ankleRightY =
+    rightAnkle
+      ? rightAnkle.y
+      : null;
+
+
+  const hipY =
+    (
+      leftHip.y +
+      rightHip.y
+    ) / 2;
+
+
+  const noseX =
+    nose
+      ? nose.x
+      : torsoX;
+
+
+  return {
+
+    shoulderWidth,
+
+    hipWidth,
+
+    torsoX,
+
+    shoulderDepth,
+
+    ankleLeftY,
+
+    ankleRightY,
+
+    hipY,
+
+    noseX
+
+  };
+
+}
+
+
+/* ======================================================
+   MAIN DETECTION LOOP
+====================================================== */
+
+function detectFrame() {
+
+  if (!running)
+    return;
 
 
   if (
@@ -755,37 +1466,12 @@ async function detectFrame() {
       performance.now();
 
 
-    /* --------------------------------------------------
-       HAND
-    -------------------------------------------------- */
+    let poseResult =
+      null;
 
-    let handResult = null;
+    let handResult =
+      null;
 
-    try {
-
-      handResult =
-        handLandmarker.detectForVideo(
-          video,
-          timestamp
-        );
-
-    }
-
-    catch (error) {
-
-      console.warn(
-        "Hand detection error:",
-        error
-      );
-
-    }
-
-
-    /* --------------------------------------------------
-       POSE
-    -------------------------------------------------- */
-
-    let poseResult = null;
 
     try {
 
@@ -800,140 +1486,83 @@ async function detectFrame() {
     catch (error) {
 
       console.warn(
-        "Pose detection error:",
+        "Pose error:",
         error
       );
 
     }
 
 
-    /* --------------------------------------------------
-       PROCESS
-    -------------------------------------------------- */
+    try {
 
-    processHand(
-      handResult
-    );
+      handResult =
+        handLandmarker.detectForVideo(
+          video,
+          timestamp
+        );
+
+    }
+
+    catch (error) {
+
+      console.warn(
+        "Hand error:",
+        error
+      );
+
+    }
+
 
     processPose(
       poseResult
     );
 
 
-    /* --------------------------------------------------
-       DRAW
-    -------------------------------------------------- */
+    processHand(
+      handResult
+    );
+
 
     drawDebug(
-      handResult,
-      poseResult
+      poseResult,
+      handResult
     );
+
   }
 
 
   requestAnimationFrame(
     detectFrame
   );
+
 }
 
 
 /* ======================================================
-   HAND PROCESSING
+   POSE PROCESSING
 ====================================================== */
 
-function processHand(result) {
+function processPose(
+  result
+) {
 
   if (
     !result ||
     !result.landmarks ||
-    result.landmarks.length === 0
+    !result.landmarks.length
   ) {
 
-    pointer.style.display =
-      "none";
+    bodyState.textContent =
+      "ไม่พบ";
 
-    hoveredControl =
-      null;
+    movementIcon.textContent =
+      "❓";
 
-    return;
-  }
-
-
-  const hand =
-    result.landmarks[0];
-
-
-  /*
-   * MediaPipe hand landmark #8
-   * = index fingertip
-   */
-
-  const indexFinger =
-    hand[8];
-
-
-  /*
-   * Because the camera is mirrored,
-   * invert X.
-   */
-
-  const targetX =
-    (1 - indexFinger.x)
-    * window.innerWidth;
-
-  const targetY =
-    indexFinger.y
-    * window.innerHeight;
-
-
-  /*
-   * Smooth the cursor
-   */
-
-  smoothX +=
-    (targetX - smoothX)
-    * SMOOTHING;
-
-  smoothY +=
-    (targetY - smoothY)
-    * SMOOTHING;
-
-
-  pointerX =
-    smoothX;
-
-  pointerY =
-    smoothY;
-
-
-  pointer.style.display =
-    "block";
-
-
-  pointer.style.left =
-    `${pointerX}px`;
-
-  pointer.style.top =
-    `${pointerY}px`;
-
-
-  checkControls();
-}
-
-
-/* ======================================================
-   BODY PROCESSING
-====================================================== */
-
-function processPose(result) {
-
-  if (
-    !result ||
-    !result.landmarks ||
-    result.landmarks.length === 0
-  ) {
+    movementText.textContent =
+      "ไม่พบร่างกาย";
 
     return;
+
   }
 
 
@@ -941,449 +1570,462 @@ function processPose(result) {
     result.landmarks[0];
 
 
+  const data =
+    extractBodyData(
+      pose
+    );
+
+
+  if (!data)
+    return;
+
+
+  bodyState.textContent =
+    "✓";
+
+
   /*
-   * MediaPipe Pose:
-   *
-   * 11 = left shoulder
-   * 12 = right shoulder
-   * 23 = left hip
-   * 24 = right hip
+   * WALK
    */
 
-  const leftShoulder =
-    pose[11];
+  detectWalking(
+    data
+  );
 
-  const rightShoulder =
-    pose[12];
 
-  const leftHip =
-    pose[23];
+  /*
+   * TURN
+   */
 
-  const rightHip =
-    pose[24];
+  detectTurning(
+    data
+  );
 
+
+  /*
+   * Confidence
+   */
+
+  let confidence =
+    0;
+
+
+  const important = [
+    pose[11],
+    pose[12],
+    pose[23],
+    pose[24],
+    pose[25],
+    pose[26],
+    pose[27],
+    pose[28]
+  ];
+
+
+  for (
+    const point of important
+  ) {
+
+    if (
+      point &&
+      typeof point.visibility ===
+      "number"
+    ) {
+
+      confidence +=
+        point.visibility;
+
+    }
+
+  }
+
+
+  confidence /=
+    important.length;
+
+
+  confidenceElement.textContent =
+    Math.round(
+      confidence * 100
+    ) + "%";
+
+}
+
+
+/* ======================================================
+   WALKING DETECTION
+====================================================== */
+
+function detectWalking(
+  data
+) {
 
   if (
-    !leftShoulder ||
-    !rightShoulder ||
-    !leftHip ||
-    !rightHip
+    data.ankleLeftY === null ||
+    data.ankleRightY === null
   ) {
 
     return;
+
+  }
+
+
+  const leftLift =
+    data.hipY -
+    data.ankleLeftY;
+
+
+  const rightLift =
+    data.hipY -
+    data.ankleRightY;
+
+
+  /*
+   * Larger value means
+   * foot is higher relative
+   * to hip.
+   */
+
+  ankleHistory.push({
+
+    time:
+      performance.now(),
+
+    left:
+      leftLift,
+
+    right:
+      rightLift
+
+  });
+
+
+  if (
+    ankleHistory.length >
+    MAX_HISTORY
+  ) {
+
+    ankleHistory.shift();
+
+  }
+
+
+  const threshold =
+    0.055;
+
+
+  /*
+   * LEFT FOOT
+   */
+
+  if (
+    leftLift >
+    threshold &&
+    !leftFootUp
+  ) {
+
+    leftFootUp =
+      true;
+
+
+    registerStep(
+      "left"
+    );
+
+  }
+
+
+  if (
+    leftLift <
+    threshold * 0.55
+  ) {
+
+    leftFootUp =
+      false;
+
   }
 
 
   /*
-   * Body center
-   */
-
-  const centerX =
-    (
-      leftShoulder.x +
-      rightShoulder.x +
-      leftHip.x +
-      rightHip.x
-    ) / 4;
-
-
-  /*
-   * Because camera is mirrored
-   */
-
-  const mirroredX =
-    1 - centerX;
-
-
-  /*
-   * Convert to screen
-   */
-
-  const bodyScreenX =
-    mirroredX *
-    window.innerWidth;
-
-
-  /*
-   * Navigation zones
+   * RIGHT FOOT
    */
 
   if (
-    bodyScreenX <
-    window.innerWidth * 0.30
+    rightLift >
+    threshold &&
+    !rightFootUp
   ) {
 
-    status.textContent =
-      "⬅️ เดินไปทางซ้าย";
+    rightFootUp =
+      true;
+
+
+    registerStep(
+      "right"
+    );
+
+  }
+
+
+  if (
+    rightLift <
+    threshold * 0.55
+  ) {
+
+    rightFootUp =
+      false;
+
+  }
+
+
+  /*
+   * Determine walking state
+   */
+
+  const now =
+    performance.now();
+
+
+  const recent =
+    ankleHistory.filter(
+      item =>
+        now - item.time <
+        1200
+    );
+
+
+  const walking =
+    recent.length >= 8 &&
+    now - lastStepTime <
+    1000;
+
+
+  if (walking) {
+
+    walkState.textContent =
+      "🚶 เดิน";
+
+
+    movementIcon.textContent =
+      "🚶";
+
+    movementText.textContent =
+      "กำลังเดิน";
+
+
+  } else {
+
+    walkState.textContent =
+      "หยุด";
+
+
+    if (
+      currentTurn ===
+      "NONE"
+    ) {
+
+      movementIcon.textContent =
+        "🧍";
+
+      movementText.textContent =
+        "หยุด";
+
+    }
+
+  }
+
+}
+
+
+/* ======================================================
+   STEP REGISTER
+====================================================== */
+
+function registerStep(
+  side
+) {
+
+  const now =
+    performance.now();
+
+
+  /*
+   * Prevent duplicate steps
+   */
+
+  if (
+    now -
+    lastStepTime <
+    280
+  ) {
+
+    return;
+
+  }
+
+
+  lastStepTime =
+    now;
+
+
+  stepCount++;
+
+
+  stepCountElement.textContent =
+    stepCount;
+
+
+  console.log(
+    "STEP:",
+    side
+  );
+
+}
+
+
+/* ======================================================
+   TURN DETECTION
+====================================================== */
+
+function detectTurning(
+  data
+) {
+
+  if (!calibrationData)
+    return;
+
+
+  /*
+   * Signal 1:
+   * shoulder depth difference
+   */
+
+  const depthDelta =
+    data.shoulderDepth -
+    calibrationData.shoulderDepth;
+
+
+  /*
+   * Signal 2:
+   * nose relative to torso
+   */
+
+  const noseOffset =
+    data.noseX -
+    data.torsoX;
+
+
+  /*
+   * Combine them.
+   *
+   * We deliberately keep the
+   * threshold conservative.
+   */
+
+  const depthSignal =
+    depthDelta * 5;
+
+
+  const headSignal =
+    noseOffset * 2;
+
+
+  const signal =
+    depthSignal +
+    headSignal;
+
+
+  turnHistory.push(
+    signal
+  );
+
+
+  if (
+    turnHistory.length >
+    MAX_TURN_HISTORY
+  ) {
+
+    turnHistory.shift();
+
+  }
+
+
+  /*
+   * Moving average
+   */
+
+  const average =
+    turnHistory.reduce(
+      (a, b) => a + b,
+      0
+    ) /
+    turnHistory.length;
+
+
+  turnScore =
+    average;
+
+
+  /*
+   * DEAD ZONE
+   *
+   * This prevents tiny movements
+   * from constantly turning the game.
+   */
+
+  const threshold =
+    0.045;
+
+
+  if (
+    average <
+    -threshold
+  ) {
+
+    currentTurn =
+      "LEFT";
+
+
+    turnState.textContent =
+      "↩️ ซ้าย";
+
+
+    movementIcon.textContent =
+      "↩️";
+
+
+    movementText.textContent =
+      "หันซ้าย";
+
 
   }
 
   else if (
-    bodyScreenX >
-    window.innerWidth * 0.70
+    average >
+    threshold
   ) {
 
-    status.textContent =
-      "เดินไปทางขวา ➡️";
+    currentTurn =
+      "RIGHT";
+
+
+    turnState.textContent =
+      "ขวา ↪️";
+
+
+    movementIcon.textContent =
+      "↪️";
+
+
+    movementText.textContent =
+      "หันขวา";
 
   }
 
   else {
 
-    status.textContent =
-      "พร้อมแล้ว — ชี้ไปที่เบาะแส";
-  }
+    currentTurn =
+      "NONE";
 
 
-  /*
-   * Shoulder angle
-   * can later become
-   * left/right turning.
-   */
-
-  const dx =
-    rightShoulder.x -
-    leftShoulder.x;
-
-  const dy =
-    rightShoulder.y -
-    leftShoulder.y;
-
-  const angle =
-    Math.atan2(
-      dy,
-      dx
-    )
-    * 180 / Math.PI;
-
-
-  /*
-   * Debug
-   */
-
-  debug.innerHTML =
-    `
-      <b>ระบบตรวจจับ</b><br>
-      ร่างกาย: ✓<br>
-      ตำแหน่ง X:
-      ${Math.round(bodyScreenX)}<br>
-      ไหล่:
-      ${angle.toFixed(1)}°
-    `;
-}
-
-
-/* ======================================================
-   CONTROL DETECTION
-====================================================== */
-
-function checkControls() {
-
-  let found = null;
-
-
-  for (
-    const control of controls
-  ) {
-
-    const rect =
-      control.getBoundingClientRect();
-
-
-    if (
-      pointerX >= rect.left &&
-      pointerX <= rect.right &&
-      pointerY >= rect.top &&
-      pointerY <= rect.bottom
-    ) {
-
-      found =
-        control;
-
-      break;
-    }
-  }
-
-
-  /*
-   * No control
-   */
-
-  if (!found) {
-
-    controls.forEach(
-      c =>
-        c.classList.remove(
-          "hover"
-        )
-    );
-
-    hoveredControl =
-      null;
-
-    hoverStartTime =
-      0;
-
-    pointer.classList.remove(
-      "locked"
-    );
-
-    selectionLocked =
-      false;
-
-    return;
-  }
-
-
-  /*
-   * New control
-   */
-
-  if (
-    found !==
-    hoveredControl
-  ) {
-
-    controls.forEach(
-      c =>
-        c.classList.remove(
-          "hover"
-        )
-    );
-
-    found.classList.add(
-      "hover"
-    );
-
-    hoveredControl =
-      found;
-
-    hoverStartTime =
-      performance.now();
-
-    selectionLocked =
-      false;
-
-    pointer.classList.remove(
-      "locked"
-    );
-
-    return;
-  }
-
-
-  /*
-   * Hold for 1 second
-   */
-
-  const elapsed =
-    performance.now()
-    -
-    hoverStartTime;
-
-
-  if (
-    elapsed >= 1000 &&
-    !selectionLocked
-  ) {
-
-    selectionLocked =
-      true;
-
-    pointer.classList.add(
-      "locked"
-    );
-
-    found.classList.add(
-      "selected"
-    );
-
-
-    selectControl(
-      found.dataset.action
-    );
-
-
-    setTimeout(
-      () => {
-
-        found.classList.remove(
-          "selected"
-        );
-
-        pointer.classList.remove(
-          "locked"
-        );
-
-        selectionLocked =
-          false;
-
-      },
-      900
-    );
-  }
-}
-
-
-/* ======================================================
-   CONTROL ACTION
-====================================================== */
-
-function selectControl(action) {
-
-  if (
-    action ===
-    "left"
-  ) {
-
-    status.textContent =
-      "⬅️ สั่งให้ตัวละครเดินซ้าย";
-
-  }
-
-
-  if (
-    action ===
-    "right"
-  ) {
-
-    status.textContent =
-      "สั่งให้ตัวละครเดินขวา ➡️";
-
-  }
-
-
-  if (
-    action ===
-    "explore"
-  ) {
-
-    status.textContent =
-      "🔍 สำรวจ!";
-
-  }
-
-
-  console.log(
-    "ACTION:",
-    action
-  );
-}
-
-
-/* ======================================================
-   DEBUG DRAW
-====================================================== */
-
-function drawDebug(
-  handResult,
-  poseResult
-) {
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  /*
-   * We only draw the index fingertip
-   * in this first prototype.
-   */
-
-  if (
-    handResult &&
-    handResult.landmarks &&
-    handResult.landmarks.length
-  ) {
-
-    const hand =
-      handResult.landmarks[0];
-
-    const finger =
-      hand[8];
-
-
-    const x =
-      (1 - finger.x)
-      * canvas.width;
-
-    const y =
-      finger.y
-      * canvas.height;
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      x,
-      y,
-      12,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fillStyle =
-      "rgba(255,209,102,.95)";
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.arc(
-      x,
-      y,
-      24,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.strokeStyle =
-      "rgba(255,209,102,.6)";
-
-    ctx.lineWidth =
-      3;
-
-    ctx.stroke();
-  }
-}
-
-
-/* ======================================================
-   PAGE VISIBILITY
-====================================================== */
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if (
-      document.hidden
-    ) {
-
-      running =
-        false;
-
-    }
-
-    else if (
-      video.srcObject
-    ) {
-
-      running =
-        true;
-
-      requestAnimationFrame(
-        detectFrame
-      );
-    }
-  }
-);
-
-</script>
-
-</body>
-</html>
+    turnState.textContent =
