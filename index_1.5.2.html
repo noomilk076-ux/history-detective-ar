@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>History Detective AR — Body Control Test</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#000}
+#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#topBar{position:absolute;top:0;left:0;right:0;padding:calc(12px + env(safe-area-inset-top)) 18px 15px;background:linear-gradient(rgba(0,0,0,.78),rgba(0,0,0,.05));z-index:20}
+#title{font-size:clamp(22px,5vw,36px);font-weight:900}
+#status{margin-top:4px;font-size:clamp(14px,3vw,21px)}
+#movement{position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);text-align:center;z-index:15;pointer-events:none}
+#movementIcon{font-size:clamp(60px,14vw,120px)}
+#movementText{margin-top:10px;padding:10px 22px;border-radius:18px;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);font-size:clamp(22px,5vw,40px);font-weight:900}
+#debug{position:absolute;right:12px;top:105px;z-index:25;min-width:205px;padding:12px 14px;border-radius:15px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);font-size:12px;line-height:1.7}
+#pointer{position:absolute;width:55px;height:55px;border-radius:50%;border:4px solid #fff;background:radial-gradient(circle,#fff 0 7px,rgba(255,255,255,.15) 8px);box-shadow:0 0 25px rgba(255,255,255,.9);transform:translate(-50%,-50%);pointer-events:none;z-index:30;display:none}
+#startScreen,#calibration{position:absolute;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:25px;text-align:center}
+#startScreen{background:radial-gradient(circle,rgba(35,72,105,.97),rgba(2,8,15,1))}
+#calibration{display:none;background:rgba(3,10,18,.8);backdrop-filter:blur(10px)}
+.card{width:min(720px,100%);padding:35px;border-radius:28px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18)}
+.card h1{margin:0 0 15px;font-size:clamp(30px,8vw,58px)}
+.card p{font-size:clamp(16px,3vw,23px);line-height:1.55}
+#startButton{margin-top:20px;padding:17px 35px;border:0;border-radius:18px;background:#ffd166;color:#201500;font-size:21px;font-weight:900}
+#countdown{margin-top:18px;font-size:clamp(55px,14vw,100px);font-weight:900;color:#ffd166}
+@media(max-width:700px){#debug{min-width:155px;font-size:10px}}
+</style>
+</head>
+<body>
+<div id="app">
+<video id="camera" autoplay playsinline muted></video>
+<canvas id="overlay"></canvas>
+<div id="pointer"></div>
+<div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
+<div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
+<div id="debug">
+<b>🔎 ระบบตรวจจับ</b><br>
+กล้อง: <span id="cameraState">–</span><br>
+ร่างกาย: <span id="bodyState">–</span><br>
+เดิน: <span id="walkState">หยุด</span><br>
+เลี้ยว: <span id="turnState">ตรง</span><br>
+ไหล่ขวา: <span id="rightShoulderState">–</span><br>
+ไหล่ซ้าย: <span id="leftShoulderState">–</span><br>
+ก้าว: <span id="stepCount">0</span><br>
+ความมั่นใจ: <span id="confidence">–</span>
+</div>
+<div id="startScreen"><div class="card">
+<h1>🏺 ภารกิจนักสืบ</h1>
+<p>ระบบจะใช้กล้องตรวจจับร่างกายและการเคลื่อนไหว</p>
+<p>🚶 ก้าวเท้าสลับ = เดินในเกม</p>
+<p>↩️ เลี้ยวซ้าย = ไหล่ขวาเข้าหากล้อง</p>
+<p>↪️ เลี้ยวขวา = ไหล่ซ้ายเข้าหากล้อง</p>
+<p>☝️ นิ้วชี้ = ตัวชี้สำหรับเลือกเบาะแส</p>
+<button id="startButton">🎥 เริ่มภารกิจ</button>
+</div></div>
+<div id="calibration"><div class="card">
+<div style="font-size:75px">🧍</div>
+<div style="font-size:clamp(28px,7vw,48px);font-weight:900">เตรียมตัวนักสืบ</div>
+<p>ยืนตรงกลางหน้ากล้อง มองตรง วางแขนสบาย ๆ และอยู่นิ่ง ๆ</p>
+<div id="countdown">3</div>
+</div></div>
+</div>
+<script type="module">
+const video=document.getElementById("camera");
+const canvas=document.getElementById("overlay");
+const ctx=canvas.getContext("2d");
+const startScreen=document.getElementById("startScreen");
+const startButton=document.getElementById("startButton");
+const calibration=document.getElementById("calibration");
+const countdown=document.getElementById("countdown");
+const status=document.getElementById("status");
+const movementIcon=document.getElementById("movementIcon");
+const movementText=document.getElementById("movementText");
+const cameraState=document.getElementById("cameraState");
+const bodyState=document.getElementById("bodyState");
+const walkState=document.getElementById("walkState");
+const turnState=document.getElementById("turnState");
+const rightShoulderState=document.getElementById("rightShoulderState");
+const leftShoulderState=document.getElementById("leftShoulderState");
+const stepCountElement=document.getElementById("stepCount");
+const confidenceElement=document.getElementById("confidence");
+const pointer=document.getElementById("pointer");
+
+let HandLandmarker,PoseLandmarker,FilesetResolver;
+let handLandmarker=null,poseLandmarker=null;
+let running=false,lastVideoTime=-1,calibrationData=null;
+let stepCount=0,lastStepTime=0,leftUp=false,rightUp=false;
+let turnCandidate="NONE",turnCandidateFrames=0,turnStateValue="NONE",lastTurnChange=0;
+let shoulderHistory=[];
+let walkHistory=[];
+let smoothPointerX=0,smoothPointerY=0;
+
+const TURN_THRESHOLD=0.035;
+const TURN_RELEASE=0.018;
+const TURN_CONFIRM_FRAMES=4;
+const TURN_COOLDOWN=450;
+const WALK_KNEE_THRESHOLD=0.035;
+const POINTER_SMOOTHING=0.25;
+
+const HAND_MODEL="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+const POSE_MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const WASM_URL="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
+const VISION_URL="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
+
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function distance(a,b){const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy)}
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+window.addEventListener("resize",resizeCanvas);
+
+async function openCamera(){
+  status.textContent="📷 กำลังเปิดกล้อง...";
+  cameraState.textContent="กำลังเปิด";
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error("Browser ไม่รองรับกล้อง");
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
+  video.srcObject=stream;
+  await video.play();
+  cameraState.textContent="✓";
+  status.textContent="📷 กล้องพร้อมแล้ว";
+  resizeCanvas();
+}
+
+async function loadMediaPipe(){
+  status.textContent="🧠 กำลังโหลดระบบตรวจจับ...";
+  ({HandLandmarker,PoseLandmarker,FilesetResolver}=await import(VISION_URL));
+  const vision=await FilesetResolver.forVisionTasks(WASM_URL);
+  status.textContent="🧠 กำลังโหลดระบบร่างกาย...";
+  poseLandmarker=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:POSE_MODEL,delegate:"GPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+  status.textContent="🧠 กำลังโหลดระบบนิ้ว...";
+  handLandmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:HAND_MODEL,delegate:"GPU"},runningMode:"VIDEO",numHands:1,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
+  status.textContent="✓ ระบบตรวจจับพร้อมแล้ว";
+}
+
+function getBodyData(pose){
+  const nose=pose[0],ls=pose[11],rs=pose[12],lh=pose[23],rh=pose[24],lk=pose[25],rk=pose[26],la=pose[27],ra=pose[28];
+  if(!ls||!rs||!lh||!rh)return null;
+  const centerX=(ls.x+rs.x+lh.x+rh.x)/4;
+  return {
+    centerX,
+    shoulderWidth:distance(ls,rs),
+    shoulderDepth:rs.z-ls.z,
+    leftShoulderZ:ls.z,
+    rightShoulderZ:rs.z,
+    noseX:nose?.x??centerX,
+    kneeLeftY:lk?.y??null,
+    kneeRightY:rk?.y??null,
+    leftAnkleY:la?.y??null,
+    rightAnkleY:ra?.y??null
+  };
+}
+
+async function runCalibration(){
+  calibration.style.display="flex";
+  const samples=[];
+  for(let n=3;n>=1;n--){countdown.textContent=n;await wait(800)}
+  countdown.textContent="●";
+  const start=performance.now();
+  while(performance.now()-start<1800){
+    const result=poseLandmarker.detectForVideo(video,performance.now());
+    if(result?.landmarks?.length){
+      const d=getBodyData(result.landmarks[0]);
+      if(d)samples.push(d);
+    }
+    await wait(60);
+  }
+  if(!samples.length){
+    calibration.style.display="none";
+    throw new Error("ไม่พบร่างกายระหว่าง Calibration กรุณายืนให้เห็นศีรษะ ไหล่ สะโพก และเข่า");
+  }
+  const avg=k=>{
+    const values=samples.map(x=>x[k]).filter(v=>typeof v==="number"&&Number.isFinite(v));
+    return values.length?values.reduce((s,v)=>s+v,0)/values.length:0;
+  };
+  calibrationData={
+    shoulderDepth:avg("shoulderDepth"),
+    leftShoulderZ:avg("leftShoulderZ"),
+    rightShoulderZ:avg("rightShoulderZ"),
+    shoulderWidth:avg("shoulderWidth"),
+    kneeLeftY:avg("kneeLeftY"),
+    kneeRightY:avg("kneeRightY")
+  };
+  shoulderHistory=[];
+  walkHistory=[];
+  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;
+  stepCountElement.textContent="0";
+  calibration.style.display="none";
+}
+
+startButton.addEventListener("click",async()=>{
+  try{
+    startButton.disabled=true;
+    await openCamera();
+    startScreen.style.display="none";
+    await loadMediaPipe();
+    await runCalibration();
+    running=true;
+    status.textContent="พร้อมแล้ว — ลองก้าวและเลี้ยว";
+    movementIcon.textContent="🧍";
+    movementText.textContent="พร้อมแล้ว";
+    requestAnimationFrame(detectFrame);
+  }catch(error){
+    console.error(error);
+    status.textContent="❌ เริ่มระบบไม่สำเร็จ";
+    startButton.disabled=false;
+    startButton.textContent="ลองอีกครั้ง";
+    alert("ไม่สามารถเริ่มระบบได้\n\n"+error.message);
+  }
+});
+
+function detectFrame(){
+  if(!running)return;
+  if(video.readyState>=2&&video.currentTime!==lastVideoTime){
+    lastVideoTime=video.currentTime;
+    const timestamp=performance.now();
+    let poseResult=null,handResult=null;
+    try{poseResult=poseLandmarker.detectForVideo(video,timestamp)}catch(e){console.warn("Pose:",e)}
+    try{handResult=handLandmarker.detectForVideo(video,timestamp)}catch(e){console.warn("Hand:",e)}
+    if(poseResult)processPose(poseResult);
+    if(handResult)processHand(handResult);
+    drawLandmarks(poseResult,handResult);
+  }
+  requestAnimationFrame(detectFrame);
+}
+
+function processPose(result){
+  if(!result.landmarks?.length){
+    bodyState.textContent="ไม่พบ";
+    confidenceElement.textContent="–";
+    return;
+  }
+  const pose=result.landmarks[0],data=getBodyData(pose);
+  if(!data)return;
+  bodyState.textContent="✓";
+  detectWalking(data);
+  detectTurning(data);
+  const ids=[11,12,23,24,25,26,27,28];
+  const vis=ids.map(i=>pose[i]?.visibility).filter(v=>typeof v==="number");
+  confidenceElement.textContent=vis.length?Math.round(vis.reduce((a,b)=>a+b,0)/vis.length*100)+"%":"–";
+}
+
+function detectWalking(data){
+  if(data.kneeLeftY==null||data.kneeRightY==null||!calibrationData)return;
+  const leftLift=calibrationData.kneeLeftY-data.kneeLeftY;
+  const rightLift=calibrationData.kneeRightY-data.kneeRightY;
+  if(leftLift>WALK_KNEE_THRESHOLD&&!leftUp){leftUp=true;registerStep("ซ้าย")}
+  if(leftLift<WALK_KNEE_THRESHOLD*.45)leftUp=false;
+  if(rightLift>WALK_KNEE_THRESHOLD&&!rightUp){rightUp=true;registerStep("ขวา")}
+  if(rightLift<WALK_KNEE_THRESHOLD*.45)rightUp=false;
+  const walking=performance.now()-lastStepTime<900;
+  walkState.textContent=walking?"🚶 เดิน":"หยุด";
+  if(walking&&turnStateValue==="NONE"){movementIcon.textContent="🚶";movementText.textContent="กำลังเดิน";status.textContent="🚶 เดินอยู่กับที่"}
+  else if(!walking&&turnStateValue==="NONE"){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+}
+
+function registerStep(side){
+  const now=performance.now();
+  if(now-lastStepTime<250)return;
+  lastStepTime=now;stepCount++;stepCountElement.textContent=stepCount;
+}
+
+function detectTurning(data){
+  if(!calibrationData)return;
+  const rightDelta=data.rightShoulderZ-calibrationData.rightShoulderZ;
+  const leftDelta=data.leftShoulderZ-calibrationData.leftShoulderZ;
+  const rightTowardCamera=-rightDelta;
+  const leftTowardCamera=-leftDelta;
+  const signalLeft=rightTowardCamera-Math.max(0,leftTowardCamera)*.35;
+  const signalRight=leftTowardCamera-Math.max(0,rightTowardCamera)*.35;
+  const candidate=signalLeft>TURN_THRESHOLD&&signalLeft>signalRight?"LEFT":signalRight>TURN_THRESHOLD&&signalRight>signalLeft?"RIGHT":"NONE";
+  rightShoulderState.textContent=rightTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  leftShoulderState.textContent=leftTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  if(candidate==="NONE"){
+    if(turnStateValue!=="NONE"&&Math.max(signalLeft,signalRight)<TURN_RELEASE){
+      turnStateValue="NONE";turnCandidate="NONE";turnCandidateFrames=0;
+      turnState.textContent="ตรง";
+      if(performance.now()-lastStepTime>900){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+    }
+    return;
+  }
+  if(candidate===turnCandidate)turnCandidateFrames++;else{turnCandidate=candidate;turnCandidateFrames=1}
+  if(turnCandidateFrames>=TURN_CONFIRM_FRAMES&&performance.now()-lastTurnChange>TURN_COOLDOWN){
+    turnStateValue=candidate;lastTurnChange=performance.now();
+    if(candidate==="LEFT"){
+      turnState.textContent="↩️ ซ้าย";movementIcon.textContent="↩️";movementText.textContent="เลี้ยวซ้าย";status.textContent="↩️ เลี้ยวซ้าย";
+    }else{
+      turnState.textContent="ขวา ↪️";movementIcon.textContent="↪️";movementText.textContent="เลี้ยวขวา";status.textContent="↪️ เลี้ยวขวา";
+    }
+  }
+}
+
+function processHand(result){
+  if(!result.landmarks?.length){pointer.style.display="none";return}
+  const finger=result.landmarks[0][8];
+  if(!finger)return;
+  const x=(1-finger.x)*innerWidth,y=finger.y*innerHeight;
+  smoothPointerX+=(x-smoothPointerX)*POINTER_SMOOTHING;
+  smoothPointerY+=(y-smoothPointerY)*POINTER_SMOOTHING;
+  pointer.style.display="block";
+  pointer.style.left=smoothPointerX+"px";
+  pointer.style.top=smoothPointerY+"px";
+}
+
+function drawLandmarks(poseResult,handResult){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(poseResult?.landmarks?.length){
+    const pose=poseResult.landmarks[0];
+    [0,11,12,23,24,25,26,27,28].forEach(i=>{
+      const p=pose[i];if(!p)return;
+      const x=(1-p.x)*canvas.width,y=p.y*canvas.height;
+      ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle="rgba(70,220,140,.95)";ctx.fill();
+    });
+  }
+  if(handResult?.landmarks?.length){
+    const p=handResult.landmarks[0][8];
+    if(p){
+      const x=(1-p.x)*canvas.width,y=p.y*canvas.height;
+      ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.strokeStyle="rgba(255,209,102,.95)";ctx.lineWidth=4;ctx.stroke();
+    }
+  }
+}
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)running=false;
+  else if(video.srcObject&&calibrationData&&!running){running=true;lastVideoTime=-1;requestAnimationFrame(detectFrame)}
+});
+</script>
+</body>
+</html>
