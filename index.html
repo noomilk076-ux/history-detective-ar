@@ -1,787 +1,501 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,
+           initial-scale=1,
+           maximum-scale=1,
+           user-scalable=no"
+>
+
+<title>History Detective AR</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: #07111f;
+  color: white;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* CAMERA */
+
+#camera {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  background: #000;
+}
 
-  <meta charset="UTF-8">
+/* LANDMARK */
 
-  <meta
-    name="viewport"
-    content="width=device-width,
-             initial-scale=1,
-             maximum-scale=1,
-             user-scalable=no"
-  >
+#overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
 
-  <title>History Detective AR</title>
+/* TOP */
 
-  <style>
+#topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  padding:
+    calc(12px + env(safe-area-inset-top))
+    18px
+    15px;
 
-    html,
-    body {
+  background:
+    linear-gradient(
+      rgba(0,0,0,.78),
+      rgba(0,0,0,.05)
+    );
 
-      margin: 0;
-      padding: 0;
+  z-index: 20;
+}
 
-      width: 100%;
-      height: 100%;
+#title {
+  font-size: clamp(22px, 5vw, 36px);
+  font-weight: 900;
+}
 
-      overflow: hidden;
+#status {
+  margin-top: 4px;
+  font-size: clamp(14px, 3vw, 21px);
+}
 
-      font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+/* MOVEMENT */
 
-      background: #07111f;
-      color: white;
-    }
+#movement {
+  position: absolute;
+  left: 50%;
+  top: 25%;
 
+  transform: translate(-50%, -50%);
 
-    #app {
+  text-align: center;
+  z-index: 15;
+  pointer-events: none;
+}
 
-      position: relative;
+#movementIcon {
+  font-size: clamp(60px, 14vw, 120px);
+}
 
-      width: 100%;
-      height: 100%;
+#movementText {
+  margin-top: 10px;
 
-      overflow: hidden;
-    }
+  padding: 10px 22px;
 
+  border-radius: 18px;
 
-    /* ==================================================
-       CAMERA
-    ================================================== */
+  background: rgba(0,0,0,.65);
 
-    #camera {
+  backdrop-filter: blur(8px);
 
-      position: absolute;
+  font-size: clamp(22px, 5vw, 40px);
 
-      inset: 0;
+  font-weight: 900;
+}
 
-      width: 100%;
-      height: 100%;
+/* DEBUG */
 
-      object-fit: cover;
+#debug {
+  position: absolute;
 
-      transform: scaleX(-1);
+  right: 12px;
+  top: 105px;
 
-      background: #000;
-    }
+  z-index: 25;
 
+  min-width: 190px;
 
-    /* ==================================================
-       CANVAS
-    ================================================== */
+  padding: 12px 14px;
 
-    #overlay {
+  border-radius: 15px;
 
-      position: absolute;
+  background: rgba(0,0,0,.70);
 
-      inset: 0;
+  backdrop-filter: blur(8px);
 
-      width: 100%;
-      height: 100%;
+  font-size: 12px;
 
-      pointer-events: none;
+  line-height: 1.7;
+}
 
-      z-index: 3;
-    }
+/* POINTER */
 
+#pointer {
+  position: absolute;
 
-    /* ==================================================
-       TOP BAR
-    ================================================== */
+  width: 55px;
+  height: 55px;
 
-    #topBar {
+  border-radius: 50%;
 
-      position: absolute;
+  border: 4px solid white;
 
-      top: 0;
-      left: 0;
-      right: 0;
+  background:
+    radial-gradient(
+      circle,
+      white 0 7px,
+      rgba(255,255,255,.15) 8px
+    );
 
-      padding:
-        calc(12px + env(safe-area-inset-top))
-        20px
-        16px;
+  box-shadow:
+    0 0 25px rgba(255,255,255,.9);
 
-      background:
-        linear-gradient(
-          rgba(0,0,0,.78),
-          rgba(0,0,0,.08)
-        );
+  transform:
+    translate(-50%, -50%);
 
-      z-index: 20;
-    }
+  pointer-events: none;
 
+  z-index: 30;
 
-    #title {
+  display: none;
+}
 
-      font-size:
-        clamp(22px, 4vw, 34px);
+/* START */
 
-      font-weight: 800;
-    }
+#startScreen {
+  position: absolute;
+  inset: 0;
 
+  z-index: 100;
 
-    #status {
+  display: flex;
 
-      margin-top: 5px;
+  align-items: center;
+  justify-content: center;
 
-      font-size:
-        clamp(14px, 2.5vw, 20px);
+  padding: 25px;
 
-      opacity: .95;
-    }
+  background:
+    radial-gradient(
+      circle,
+      rgba(35,72,105,.97),
+      rgba(2,8,15,1)
+    );
+}
 
+#startCard {
+  width: min(720px, 100%);
 
-    /* ==================================================
-       MOVEMENT DISPLAY
-    ================================================== */
+  padding: 35px;
 
-    #movement {
+  border-radius: 28px;
 
-      position: absolute;
+  background: rgba(255,255,255,.08);
 
-      left: 50%;
-      top: 25%;
+  border:
+    1px solid rgba(255,255,255,.18);
 
-      transform: translate(-50%, -50%);
+  text-align: center;
+}
 
-      z-index: 15;
+#startCard h1 {
+  margin: 0 0 15px;
 
-      text-align: center;
+  font-size:
+    clamp(30px, 8vw, 58px);
+}
 
-      pointer-events: none;
-    }
+#startCard p {
+  font-size:
+    clamp(16px, 3vw, 23px);
 
+  line-height: 1.55;
+}
 
-    #movementIcon {
+#startButton {
+  margin-top: 20px;
 
-      font-size:
-        clamp(60px, 12vw, 120px);
+  padding: 17px 35px;
 
-      line-height: 1;
+  border: 0;
 
-      filter:
-        drop-shadow(0 8px 20px rgba(0,0,0,.45));
-    }
+  border-radius: 18px;
 
+  background: #ffd166;
 
-    #movementText {
+  color: #201500;
 
-      margin-top: 10px;
+  font-size: 21px;
 
-      padding:
-        10px 22px;
+  font-weight: 900;
+}
 
-      border-radius: 18px;
+/* CALIBRATION */
 
-      background:
-        rgba(0,0,0,.60);
+#calibration {
+  position: absolute;
 
-      backdrop-filter: blur(8px);
+  inset: 0;
 
-      font-size:
-        clamp(22px, 5vw, 40px);
+  z-index: 90;
 
-      font-weight: 900;
-    }
+  display: none;
 
+  align-items: center;
+  justify-content: center;
 
-    /* ==================================================
-       POINTER
-    ================================================== */
+  padding: 25px;
 
-    #pointer {
+  text-align: center;
 
-      position: absolute;
+  background:
+    rgba(3,10,18,.78);
 
-      width: 54px;
-      height: 54px;
+  backdrop-filter: blur(10px);
+}
 
-      border-radius: 50%;
+#calibrationCard {
+  width: min(700px, 100%);
 
-      border: 4px solid white;
+  padding: 35px;
 
-      background:
-        radial-gradient(
-          circle,
-          rgba(255,255,255,.95) 0 7px,
-          rgba(255,255,255,.18) 8px 100%
-        );
+  border-radius: 28px;
 
-      box-shadow:
-        0 0 22px rgba(255,255,255,.9);
+  background:
+    rgba(255,255,255,.10);
+}
 
-      transform:
-        translate(-50%, -50%);
+#calibrationIcon {
+  font-size: 75px;
+}
 
-      pointer-events: none;
+#calibrationTitle {
+  margin-top: 10px;
 
-      z-index: 30;
+  font-size:
+    clamp(28px, 7vw, 48px);
 
-      display: none;
-    }
+  font-weight: 900;
+}
 
+#calibrationInstruction {
+  margin-top: 12px;
 
-    #pointer.locked {
+  font-size:
+    clamp(16px, 3vw, 23px);
 
-      border-color: #ffd166;
+  line-height: 1.6;
+}
 
-      box-shadow:
-        0 0 30px rgba(255,209,102,1);
-    }
+#countdown {
+  margin-top: 18px;
 
+  font-size:
+    clamp(55px, 14vw, 100px);
 
-    /* ==================================================
-       DEBUG PANEL
-    ================================================== */
+  font-weight: 900;
 
-    #debug {
+  color: #ffd166;
+}
 
-      position: absolute;
+/* MOBILE */
 
-      right: 14px;
-      top: 100px;
+@media(max-width:700px) {
 
-      z-index: 25;
+  #debug {
+    min-width: 145px;
+    font-size: 10px;
+  }
 
-      padding: 12px 14px;
+}
 
-      border-radius: 15px;
-
-      background:
-        rgba(0,0,0,.68);
-
-      backdrop-filter: blur(8px);
-
-      font-size: 12px;
-
-      line-height: 1.6;
-
-      min-width: 190px;
-
-      pointer-events: none;
-    }
-
-
-    /* ==================================================
-       TEST CONTROLS
-    ================================================== */
-
-    #controls {
-
-      position: absolute;
-
-      left: 0;
-      right: 0;
-
-      bottom: 0;
-
-      padding:
-        16px
-        16px
-        calc(16px + env(safe-area-inset-bottom));
-
-      display: flex;
-
-      justify-content: center;
-
-      gap: 12px;
-
-      z-index: 20;
-    }
-
-
-    .control {
-
-      min-width: 150px;
-
-      padding: 15px 20px;
-
-      border-radius: 18px;
-
-      border:
-        2px solid rgba(255,255,255,.30);
-
-      background:
-        rgba(7,17,31,.82);
-
-      color: white;
-
-      font-size:
-        clamp(15px, 3vw, 21px);
-
-      font-weight: 800;
-
-      text-align: center;
-
-      transition:
-        .15s ease;
-    }
-
-
-    .control.hover {
-
-      border-color: #ffd166;
-
-      background:
-        rgba(255,209,102,.25);
-
-      transform: scale(1.05);
-    }
-
-
-    .control.selected {
-
-      border-color: #46dc8c;
-
-      background:
-        rgba(70,220,140,.35);
-
-      transform: scale(1.08);
-    }
-
-
-    /* ==================================================
-       START SCREEN
-    ================================================== */
-
-    #startScreen {
-
-      position: absolute;
-
-      inset: 0;
-
-      z-index: 100;
-
-      display: flex;
-
-      align-items: center;
-      justify-content: center;
-
-      padding: 25px;
-
-      background:
-        radial-gradient(
-          circle at center,
-          rgba(37,74,108,.96),
-          rgba(2,8,15,.99)
-        );
-    }
-
-
-    #startCard {
-
-      width:
-        min(760px, 100%);
-
-      padding:
-        clamp(25px, 5vw, 45px);
-
-      border-radius: 30px;
-
-      background:
-        rgba(255,255,255,.08);
-
-      border:
-        1px solid rgba(255,255,255,.18);
-
-      backdrop-filter:
-        blur(14px);
-
-      text-align: center;
-    }
-
-
-    #startCard h1 {
-
-      margin: 0 0 14px;
-
-      font-size:
-        clamp(30px, 7vw, 58px);
-    }
-
-
-    #startCard p {
-
-      margin: 8px 0;
-
-      font-size:
-        clamp(16px, 3vw, 23px);
-
-      line-height: 1.65;
-    }
-
-
-    #startButton {
-
-      margin-top: 20px;
-
-      padding:
-        17px 35px;
-
-      border: 0;
-
-      border-radius: 18px;
-
-      background: #ffd166;
-
-      color: #201500;
-
-      font-size: 21px;
-
-      font-weight: 900;
-
-      cursor: pointer;
-    }
-
-
-    /* ==================================================
-       CALIBRATION
-    ================================================== */
-
-    #calibration {
-
-      position: absolute;
-
-      inset: 0;
-
-      z-index: 90;
-
-      display: none;
-
-      align-items: center;
-      justify-content: center;
-
-      background:
-        rgba(3,10,18,.82);
-
-      backdrop-filter:
-        blur(8px);
-
-      text-align: center;
-
-      padding: 25px;
-    }
-
-
-    #calibrationCard {
-
-      width:
-        min(700px, 100%);
-
-      padding: 35px;
-
-      border-radius: 28px;
-
-      background:
-        rgba(255,255,255,.10);
-
-      border:
-        1px solid rgba(255,255,255,.2);
-    }
-
-
-    #calibrationIcon {
-
-      font-size: 75px;
-    }
-
-
-    #calibrationTitle {
-
-      font-size:
-        clamp(28px, 6vw, 48px);
-
-      font-weight: 900;
-
-      margin-top: 12px;
-    }
-
-
-    #calibrationInstruction {
-
-      font-size:
-        clamp(16px, 3vw, 23px);
-
-      line-height: 1.6;
-
-      margin-top: 12px;
-    }
-
-
-    #countdown {
-
-      margin-top: 20px;
-
-      font-size:
-        clamp(50px, 12vw, 100px);
-
-      font-weight: 900;
-
-      color: #ffd166;
-    }
-
-
-    /* ==================================================
-       RESPONSIVE
-    ================================================== */
-
-    @media (max-width: 700px) {
-
-      #controls {
-
-        flex-direction: column;
-
-        align-items: center;
-      }
-
-      .control {
-
-        width:
-          min(420px, 90vw);
-      }
-
-      #debug {
-
-        font-size: 10px;
-
-        min-width: 150px;
-
-        opacity: .85;
-      }
-
-    }
-
-  </style>
-
+</style>
 </head>
 
 
 <body>
 
-
 <div id="app">
 
+<video
+  id="camera"
+  autoplay
+  playsinline
+  muted
+></video>
 
-  <!-- CAMERA -->
+<canvas id="overlay"></canvas>
 
-  <video
-    id="camera"
-    autoplay
-    playsinline
-    muted
-  ></video>
-
-
-  <!-- DEBUG CANVAS -->
-
-  <canvas
-    id="overlay"
-  ></canvas>
+<div id="pointer"></div>
 
 
-  <!-- POINTER -->
+<div id="topBar">
 
-  <div id="pointer"></div>
+  <div id="title">
+    🕵️ นักสืบประวัติศาสตร์
+  </div>
+
+  <div id="status">
+    พร้อมเริ่มภารกิจ
+  </div>
+
+</div>
 
 
-  <!-- TOP -->
+<div id="movement">
 
-  <div id="topBar">
+  <div id="movementIcon">
+    🧍
+  </div>
 
-    <div id="title">
-      🕵️ นักสืบประวัติศาสตร์
-    </div>
+  <div id="movementText">
+    รอเริ่มระบบ
+  </div>
 
-    <div id="status">
-      กำลังเตรียมระบบ...
-    </div>
+</div>
+
+
+<div id="debug">
+
+  <b>🔎 ระบบตรวจจับ</b>
+
+  <br>
+
+  กล้อง:
+  <span id="cameraState">–</span>
+
+  <br>
+
+  ร่างกาย:
+  <span id="bodyState">–</span>
+
+  <br>
+
+  เดิน:
+  <span id="walkState">หยุด</span>
+
+  <br>
+
+  หัน:
+  <span id="turnState">ตรง</span>
+
+  <br>
+
+  ก้าว:
+  <span id="stepCount">0</span>
+
+  <br>
+
+  ความมั่นใจ:
+  <span id="confidence">–</span>
+
+</div>
+
+
+<div id="startScreen">
+
+  <div id="startCard">
+
+    <h1>
+      🏺 ภารกิจนักสืบ
+    </h1>
+
+    <p>
+      ระบบจะใช้กล้องตรวจจับร่างกาย
+      และการเคลื่อนไหวของนักสืบ
+    </p>
+
+    <p>
+      🚶 เดินอยู่กับที่ = เดินในเกม
+    </p>
+
+    <p>
+      ↩️ หมุนตัวซ้าย = หันซ้าย
+    </p>
+
+    <p>
+      ↪️ หมุนตัวขวา = หันขวา
+    </p>
+
+    <p>
+      ☝️ นิ้วชี้ = เลือก
+    </p>
+
+    <button id="startButton">
+      🎥 เริ่มภารกิจ
+    </button>
 
   </div>
 
+</div>
 
-  <!-- MOVEMENT -->
 
-  <div id="movement">
+<div id="calibration">
 
-    <div id="movementIcon">
+  <div id="calibrationCard">
+
+    <div id="calibrationIcon">
       🧍
     </div>
 
-    <div id="movementText">
-      รอเริ่มภารกิจ
+    <div id="calibrationTitle">
+      เตรียมตัวนักสืบ
+    </div>
+
+    <div id="calibrationInstruction">
+
+      ยืนตรงกลางหน้ากล้อง<br>
+      มองตรง<br>
+      วางแขนสบาย ๆ<br>
+      และอยู่นิ่ง ๆ
+
+    </div>
+
+    <div id="countdown">
+      3
     </div>
 
   </div>
 
-
-  <!-- DEBUG -->
-
-  <div id="debug">
-
-    <b>ระบบตรวจจับ</b>
-
-    <br>
-
-    ร่างกาย:
-    <span id="bodyState">–</span>
-
-    <br>
-
-    การเดิน:
-    <span id="walkState">–</span>
-
-    <br>
-
-    การหัน:
-    <span id="turnState">–</span>
-
-    <br>
-
-    ก้าว:
-    <span id="stepCount">0</span>
-
-    <br>
-
-    ความมั่นใจ:
-    <span id="confidence">–</span>
-
-  </div>
-
-
-  <!-- TEST CONTROLS -->
-
-  <div id="controls">
-
-    <div
-      class="control"
-      data-action="left"
-    >
-      ↩️ หันซ้าย
-    </div>
-
-    <div
-      class="control"
-      data-action="explore"
-    >
-      🔍 สำรวจ
-    </div>
-
-    <div
-      class="control"
-      data-action="right"
-    >
-      หันขวา ↪️
-    </div>
-
-  </div>
-
-
-  <!-- START -->
-
-  <div id="startScreen">
-
-    <div id="startCard">
-
-      <h1>
-        🏺 ภารกิจนักสืบ
-      </h1>
-
-      <p>
-        ระบบจะใช้กล้องตรวจจับการเคลื่อนไหวของร่างกาย
-      </p>
-
-      <p>
-        🚶 เดินอยู่กับที่ = เดินในเกม
-      </p>
-
-      <p>
-        ↩️ หันตัว = หันมุมมอง
-      </p>
-
-      <p>
-        ☝️ นิ้วชี้ = เลือกเบาะแส
-      </p>
-
-      <button id="startButton">
-        🎥 เริ่มระบบตรวจจับ
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- CALIBRATION -->
-
-  <div id="calibration">
-
-    <div id="calibrationCard">
-
-      <div id="calibrationIcon">
-        🧍
-      </div>
-
-      <div id="calibrationTitle">
-        เตรียมตัวนักสืบ
-      </div>
-
-      <div id="calibrationInstruction">
-
-        ยืนตรงกลางหน้ากล้อง<br>
-
-        มองตรง<br>
-
-        วางแขนสบาย ๆ<br>
-
-        และอยู่นิ่ง ๆ
-
-      </div>
-
-      <div id="countdown">
-        3
-      </div>
-
-    </div>
-
-  </div>
-
+</div>
 
 </div>
 
 
 <script type="module">
 
-
-/* ======================================================
-   MEDIAPIPE
-====================================================== */
-
-import {
-
-  HandLandmarker,
-  PoseLandmarker,
-  FilesetResolver
-
-}
-from
-"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
-
-
-/* ======================================================
+/* =====================================================
    ELEMENTS
-====================================================== */
+===================================================== */
 
 const video =
   document.getElementById("camera");
@@ -791,12 +505,6 @@ const canvas =
 
 const ctx =
   canvas.getContext("2d");
-
-const pointer =
-  document.getElementById("pointer");
-
-const status =
-  document.getElementById("status");
 
 const startScreen =
   document.getElementById("startScreen");
@@ -810,11 +518,17 @@ const calibration =
 const countdown =
   document.getElementById("countdown");
 
+const status =
+  document.getElementById("status");
+
 const movementIcon =
   document.getElementById("movementIcon");
 
 const movementText =
   document.getElementById("movementText");
+
+const cameraState =
+  document.getElementById("cameraState");
 
 const bodyState =
   document.getElementById("bodyState");
@@ -831,22 +545,14 @@ const stepCountElement =
 const confidenceElement =
   document.getElementById("confidence");
 
-const controls =
-  [...document.querySelectorAll(".control")];
 
-
-/* ======================================================
-   MEDIAPIPE
-====================================================== */
+/* =====================================================
+   STATE
+===================================================== */
 
 let handLandmarker = null;
 
 let poseLandmarker = null;
-
-
-/* ======================================================
-   STATE
-====================================================== */
 
 let running = false;
 
@@ -854,317 +560,322 @@ let lastVideoTime = -1;
 
 let calibrationData = null;
 
-let calibrationSamples = [];
-
 let calibrating = false;
-
-
-/* ======================================================
-   POINTER
-====================================================== */
-
-let pointerX = 0;
-
-let pointerY = 0;
-
-let smoothX = 0;
-
-let smoothY = 0;
-
-const POINTER_SMOOTHING = 0.25;
-
-
-/* ======================================================
-   SELECTION
-====================================================== */
-
-let hoveredControl = null;
-
-let hoverStartTime = 0;
-
-let selectionLocked = false;
-
-
-/* ======================================================
-   WALK DETECTION
-====================================================== */
-
-const ankleHistory = [];
-
-const MAX_HISTORY = 30;
 
 let stepCount = 0;
 
 let lastStepTime = 0;
 
-let leftFootUp = false;
+let leftUp = false;
 
-let rightFootUp = false;
+let rightUp = false;
 
+let turnStateValue = "NONE";
 
-/* ======================================================
-   TURN DETECTION
-====================================================== */
 
-let turnHistory = [];
+/* =====================================================
+   CAMERA FIRST
+===================================================== */
 
-const MAX_TURN_HISTORY = 15;
+async function openCamera() {
 
-let currentTurn = "NONE";
+  status.textContent =
+    "📷 กำลังเปิดกล้อง...";
 
-let turnScore = 0;
+  cameraState.textContent =
+    "กำลังเปิด";
 
 
-/* ======================================================
-   MODEL URL
-====================================================== */
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
 
-const HAND_MODEL =
-"https://storage.googleapis.com/mediapipe-models/" +
-"hand_landmarker/hand_landmarker/float16/1/" +
-"hand_landmarker.task";
-
-
-const POSE_MODEL =
-"https://storage.googleapis.com/mediapipe-models/" +
-"pose_landmarker/pose_landmarker_lite/float16/1/" +
-"pose_landmarker_lite.task";
-
-
-/* ======================================================
-   START
-====================================================== */
-
-startButton.addEventListener(
-  "click",
-  startExperience
-);
-
-
-/* ======================================================
-   START EXPERIENCE
-====================================================== */
-
-async function startExperience() {
-
-  try {
-
-    startButton.disabled = true;
-
-    status.textContent =
-      "กำลังโหลดระบบตรวจจับ...";
-
-
-    const vision =
-      await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/" +
-        "@mediapipe/tasks-vision@0.10.35/wasm"
-      );
-
-
-    /* --------------------------------------------------
-       HAND
-    -------------------------------------------------- */
-
-    status.textContent =
-      "กำลังโหลดระบบนิ้วชี้...";
-
-
-    handLandmarker =
-      await HandLandmarker.createFromOptions(
-        vision,
-        {
-
-          baseOptions: {
-
-            modelAssetPath:
-              HAND_MODEL,
-
-            delegate:
-              "GPU"
-          },
-
-          runningMode:
-            "VIDEO",
-
-          numHands:
-            1,
-
-          minHandDetectionConfidence:
-            0.55,
-
-          minHandPresenceConfidence:
-            0.55,
-
-          minTrackingConfidence:
-            0.55
-
-        }
-      );
-
-
-    /* --------------------------------------------------
-       POSE
-    -------------------------------------------------- */
-
-    status.textContent =
-      "กำลังโหลดระบบร่างกาย...";
-
-
-    poseLandmarker =
-      await PoseLandmarker.createFromOptions(
-        vision,
-        {
-
-          baseOptions: {
-
-            modelAssetPath:
-              POSE_MODEL,
-
-            delegate:
-              "GPU"
-          },
-
-          runningMode:
-            "VIDEO",
-
-          numPoses:
-            1,
-
-          minPoseDetectionConfidence:
-            0.5,
-
-          minPosePresenceConfidence:
-            0.5,
-
-          minTrackingConfidence:
-            0.5
-
-        }
-      );
-
-
-    /* --------------------------------------------------
-       CAMERA
-    -------------------------------------------------- */
-
-    status.textContent =
-      "กำลังขออนุญาตใช้กล้อง...";
-
-
-    const stream =
-      await navigator.mediaDevices.getUserMedia(
-        {
-
-          video: {
-
-            facingMode:
-              "user",
-
-            width: {
-              ideal: 1280
-            },
-
-            height: {
-              ideal: 720
-            }
-
-          },
-
-          audio:
-            false
-
-        }
-      );
-
-
-    video.srcObject =
-      stream;
-
-
-    await video.play();
-
-
-    resizeCanvas();
-
-
-    window.addEventListener(
-      "resize",
-      resizeCanvas
-    );
-
-
-    startScreen.style.display =
-      "none";
-
-
-    /*
-     * Calibration
-     */
-
-    await runCalibration();
-
-
-    running =
-      true;
-
-
-    status.textContent =
-      "พร้อมแล้ว! ลองเดินอยู่กับที่";
-
-
-    requestAnimationFrame(
-      detectFrame
+    throw new Error(
+      "Browser ไม่รองรับกล้อง"
     );
 
   }
 
-  catch (error) {
 
-    console.error(error);
+  const stream =
+    await navigator.mediaDevices.getUserMedia({
 
-    status.textContent =
-      "ไม่สามารถเริ่มระบบได้";
+      video: {
 
-    startButton.disabled =
-      false;
+        facingMode: "user",
 
-    startButton.textContent =
-      "ลองอีกครั้ง";
+        width: {
+          ideal: 1280
+        },
 
-    alert(
-      "เปิดกล้องหรือระบบตรวจจับไม่สำเร็จ\n\n" +
-      "กรุณาอนุญาตการใช้กล้อง แล้วลองใหม่"
-    );
+        height: {
+          ideal: 720
+        }
 
-  }
+      },
+
+      audio: false
+
+    });
+
+
+  video.srcObject =
+    stream;
+
+
+  await video.play();
+
+
+  cameraState.textContent =
+    "✓";
+
+
+  status.textContent =
+    "📷 กล้องพร้อมแล้ว";
+
+
+  resizeCanvas();
 
 }
 
 
-/* ======================================================
+/* =====================================================
+   LOAD MEDIAPIPE
+===================================================== */
+
+async function loadMediaPipe() {
+
+  status.textContent =
+    "🧠 กำลังโหลดระบบตรวจจับ...";
+
+
+  const {
+
+    HandLandmarker,
+    PoseLandmarker,
+    FilesetResolver
+
+  } =
+    await import(
+      "https://cdn.jsdelivr.net/npm/" +
+      "@mediapipe/tasks-vision@0.10.35/" +
+      "vision_bundle.mjs"
+    );
+
+
+  const vision =
+    await FilesetResolver.forVisionTasks(
+
+      "https://cdn.jsdelivr.net/npm/" +
+      "@mediapipe/tasks-vision@0.10.35/" +
+      "wasm"
+
+    );
+
+
+  status.textContent =
+    "🧠 กำลังโหลดระบบนิ้ว...";
+
+
+  handLandmarker =
+    await HandLandmarker.createFromOptions(
+      vision,
+      {
+
+        baseOptions: {
+
+          modelAssetPath:
+            "https://storage.googleapis.com/" +
+            "mediapipe-models/hand_landmarker/" +
+            "hand_landmarker/float16/1/" +
+            "hand_landmarker.task",
+
+          delegate:
+            "GPU"
+
+        },
+
+        runningMode:
+          "VIDEO",
+
+        numHands:
+          1,
+
+        minHandDetectionConfidence:
+          0.5,
+
+        minHandPresenceConfidence:
+          0.5,
+
+        minTrackingConfidence:
+          0.5
+
+      }
+    );
+
+
+  status.textContent =
+    "🧠 กำลังโหลดระบบร่างกาย...";
+
+
+  poseLandmarker =
+    await PoseLandmarker.createFromOptions(
+      vision,
+      {
+
+        baseOptions: {
+
+          modelAssetPath:
+            "https://storage.googleapis.com/" +
+            "mediapipe-models/pose_landmarker/" +
+            "pose_landmarker_lite/float16/1/" +
+            "pose_landmarker_lite.task",
+
+          delegate:
+            "GPU"
+
+        },
+
+        runningMode:
+          "VIDEO",
+
+        numPoses:
+          1,
+
+        minPoseDetectionConfidence:
+          0.5,
+
+        minPosePresenceConfidence:
+          0.5,
+
+        minTrackingConfidence:
+          0.5
+
+      }
+    );
+
+
+  status.textContent =
+    "✓ ระบบตรวจจับพร้อมแล้ว";
+
+}
+
+
+/* =====================================================
+   START BUTTON
+===================================================== */
+
+startButton.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      startButton.disabled =
+        true;
+
+
+      /*
+       * สำคัญ:
+       * เปิดกล้องก่อนโหลด MediaPipe
+       */
+
+      await openCamera();
+
+
+      startScreen.style.display =
+        "none";
+
+
+      await loadMediaPipe();
+
+
+      await runCalibration();
+
+
+      running =
+        true;
+
+
+      status.textContent =
+        "พร้อมแล้ว — ลองเดินอยู่กับที่";
+
+
+      movementIcon.textContent =
+        "🧍";
+
+      movementText.textContent =
+        "พร้อมแล้ว";
+
+
+      requestAnimationFrame(
+        detectFrame
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+
+      status.textContent =
+        "❌ เกิดข้อผิดพลาด";
+
+
+      cameraState.textContent =
+        "ผิดพลาด";
+
+
+      startButton.disabled =
+        false;
+
+
+      startButton.textContent =
+        "ลองอีกครั้ง";
+
+
+      /*
+       * ไม่ซ่อนหน้าจอถ้ากล้องเปิดไม่ได้
+       */
+
+      alert(
+        "ไม่สามารถเริ่มระบบได้\n\n" +
+        error.message
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
    CALIBRATION
-====================================================== */
+===================================================== */
 
 async function runCalibration() {
 
   calibrating =
     true;
 
+
   calibration.style.display =
     "flex";
 
-  calibrationSamples = [];
+
+  const samples = [];
 
 
   for (
-    let i = 3;
-    i >= 1;
-    i--
+    let n = 3;
+    n >= 1;
+    n--
   ) {
 
     countdown.textContent =
-      i;
+      n;
 
     await wait(1000);
 
@@ -1172,12 +883,8 @@ async function runCalibration() {
 
 
   countdown.textContent =
-    "เก็บข้อมูล";
+    "●";
 
-
-  /*
-   * เก็บประมาณ 1.5 วินาที
-   */
 
   const start =
     performance.now();
@@ -1186,145 +893,66 @@ async function runCalibration() {
   while (
     performance.now() -
     start <
-    1500
+    1600
   ) {
 
+    const result =
+      poseLandmarker.detectForVideo(
+        video,
+        performance.now()
+      );
+
+
     if (
-      video.readyState >= 2
+      result &&
+      result.landmarks &&
+      result.landmarks.length
     ) {
 
-      const result =
-        poseLandmarker.detectForVideo(
-          video,
-          performance.now()
+      const data =
+        getBodyData(
+          result.landmarks[0]
         );
 
 
-      if (
-        result &&
-        result.landmarks &&
-        result.landmarks.length
-      ) {
+      if (data) {
 
-        const pose =
-          result.landmarks[0];
-
-
-        const sample =
-          extractBodyData(
-            pose
-          );
-
-
-        if (sample) {
-
-          calibrationSamples.push(
-            sample
-          );
-
-        }
+        samples.push(data);
 
       }
 
     }
 
-    await wait(50);
+
+    await wait(60);
 
   }
 
 
   calibrationData =
-    calculateCalibration(
-      calibrationSamples
+    averageCalibration(
+      samples
     );
 
 
   calibration.style.display =
     "none";
 
+
   calibrating =
     false;
 
-
-  movementIcon.textContent =
-    "🧍";
-
-  movementText.textContent =
-    "พร้อมแล้ว";
-
-
-  status.textContent =
-    "ยืนตรงกลางได้เลยค่ะ";
-
 }
 
 
-/* ======================================================
-   CALIBRATION CALCULATION
-====================================================== */
+/* =====================================================
+   BODY DATA
+===================================================== */
 
-function calculateCalibration(
-  samples
-) {
+function getBodyData(pose) {
 
-  if (
-    samples.length === 0
-  ) {
-
-    return {
-
-      shoulderWidth:
-        0.25,
-
-      hipWidth:
-        0.20,
-
-      torsoX:
-        0.5,
-
-      shoulderDepth:
-        0
-
-    };
-
-  }
-
-
-  const average =
-    key =>
-      samples.reduce(
-        (sum, item) =>
-          sum + item[key],
-        0
-      ) / samples.length;
-
-
-  return {
-
-    shoulderWidth:
-      average("shoulderWidth"),
-
-    hipWidth:
-      average("hipWidth"),
-
-    torsoX:
-      average("torsoX"),
-
-    shoulderDepth:
-      average("shoulderDepth")
-
-  };
-
-}
-
-
-/* ======================================================
-   EXTRACT BODY DATA
-====================================================== */
-
-function extractBodyData(
-  pose
-) {
+  const nose =
+    pose[0];
 
   const leftShoulder =
     pose[11];
@@ -1338,14 +966,17 @@ function extractBodyData(
   const rightHip =
     pose[24];
 
+  const leftKnee =
+    pose[25];
+
+  const rightKnee =
+    pose[26];
+
   const leftAnkle =
     pose[27];
 
   const rightAnkle =
     pose[28];
-
-  const nose =
-    pose[0];
 
 
   if (
@@ -1361,20 +992,20 @@ function extractBodyData(
 
 
   const shoulderWidth =
-    distance2D(
+    distance(
       leftShoulder,
       rightShoulder
     );
 
 
   const hipWidth =
-    distance2D(
+    distance(
       leftHip,
       rightHip
     );
 
 
-  const torsoX =
+  const centerX =
     (
       leftShoulder.x +
       rightShoulder.x +
@@ -1383,69 +1014,156 @@ function extractBodyData(
     ) / 4;
 
 
-  /*
-   * Difference in shoulder depth.
-   *
-   * This becomes one of the
-   * signals for turning.
-   */
-
   const shoulderDepth =
     rightShoulder.z -
     leftShoulder.z;
 
 
-  const ankleLeftY =
-    leftAnkle
-      ? leftAnkle.y
+  const kneeLeftY =
+    leftKnee
+      ? leftKnee.y
       : null;
 
 
-  const ankleRightY =
-    rightAnkle
-      ? rightAnkle.y
+  const kneeRightY =
+    rightKnee
+      ? rightKnee.y
       : null;
-
-
-  const hipY =
-    (
-      leftHip.y +
-      rightHip.y
-    ) / 2;
-
-
-  const noseX =
-    nose
-      ? nose.x
-      : torsoX;
 
 
   return {
+
+    centerX,
 
     shoulderWidth,
 
     hipWidth,
 
-    torsoX,
-
     shoulderDepth,
 
-    ankleLeftY,
+    noseX:
+      nose
+        ? nose.x
+        : centerX,
 
-    ankleRightY,
+    kneeLeftY,
 
-    hipY,
+    kneeRightY,
 
-    noseX
+    ankleLeftY:
+      leftAnkle
+        ? leftAnkle.y
+        : null,
+
+    ankleRightY:
+      rightAnkle
+        ? rightAnkle.y
+        : null
 
   };
 
 }
 
 
-/* ======================================================
-   MAIN DETECTION LOOP
-====================================================== */
+/* =====================================================
+   CALIBRATION AVERAGE
+===================================================== */
+
+function averageCalibration(
+  samples
+) {
+
+  if (
+    samples.length === 0
+  ) {
+
+    return {
+
+      centerX: .5,
+
+      shoulderWidth: .25,
+
+      hipWidth: .20,
+
+      shoulderDepth: 0,
+
+      noseOffset: 0,
+
+      kneeLeftY: .60,
+
+      kneeRightY: .60
+
+    };
+
+  }
+
+
+  const avg =
+    key => {
+
+      const values =
+        samples
+          .map(
+            s => s[key]
+          )
+          .filter(
+            v =>
+              typeof v ===
+              "number"
+          );
+
+
+      if (
+        values.length === 0
+      ) {
+
+        return 0;
+
+      }
+
+
+      return values.reduce(
+        (a,b) =>
+          a + b,
+        0
+      ) /
+      values.length;
+
+    };
+
+
+  return {
+
+    centerX:
+      avg("centerX"),
+
+    shoulderWidth:
+      avg("shoulderWidth"),
+
+    hipWidth:
+      avg("hipWidth"),
+
+    shoulderDepth:
+      avg("shoulderDepth"),
+
+    noseOffset:
+      avg("noseX") -
+      avg("centerX"),
+
+    kneeLeftY:
+      avg("kneeLeftY"),
+
+    kneeRightY:
+      avg("kneeRightY")
+
+  };
+
+}
+
+
+/* =====================================================
+   MAIN LOOP
+===================================================== */
 
 function detectFrame() {
 
@@ -1462,7 +1180,7 @@ function detectFrame() {
       video.currentTime;
 
 
-    const timestamp =
+    const now =
       performance.now();
 
 
@@ -1478,7 +1196,7 @@ function detectFrame() {
       poseResult =
         poseLandmarker.detectForVideo(
           video,
-          timestamp
+          now
         );
 
     }
@@ -1486,7 +1204,7 @@ function detectFrame() {
     catch (error) {
 
       console.warn(
-        "Pose error:",
+        "Pose:",
         error
       );
 
@@ -1498,7 +1216,7 @@ function detectFrame() {
       handResult =
         handLandmarker.detectForVideo(
           video,
-          timestamp
+          now
         );
 
     }
@@ -1506,24 +1224,32 @@ function detectFrame() {
     catch (error) {
 
       console.warn(
-        "Hand error:",
+        "Hand:",
         error
       );
 
     }
 
 
-    processPose(
-      poseResult
-    );
+    if (poseResult) {
+
+      processPose(
+        poseResult
+      );
+
+    }
 
 
-    processHand(
-      handResult
-    );
+    if (handResult) {
+
+      processHand(
+        handResult
+      );
+
+    }
 
 
-    drawDebug(
+    drawLandmarks(
       poseResult,
       handResult
     );
@@ -1538,28 +1264,21 @@ function detectFrame() {
 }
 
 
-/* ======================================================
-   POSE PROCESSING
-====================================================== */
+/* =====================================================
+   POSE
+===================================================== */
 
 function processPose(
   result
 ) {
 
   if (
-    !result ||
     !result.landmarks ||
     !result.landmarks.length
   ) {
 
     bodyState.textContent =
       "ไม่พบ";
-
-    movementIcon.textContent =
-      "❓";
-
-    movementText.textContent =
-      "ไม่พบร่างกาย";
 
     return;
 
@@ -1571,7 +1290,7 @@ function processPose(
 
 
   const data =
-    extractBodyData(
+    getBodyData(
       pose
     );
 
@@ -1584,33 +1303,18 @@ function processPose(
     "✓";
 
 
-  /*
-   * WALK
-   */
-
   detectWalking(
     data
   );
 
-
-  /*
-   * TURN
-   */
 
   detectTurning(
     data
   );
 
 
-  /*
-   * Confidence
-   */
+  const points = [
 
-  let confidence =
-    0;
-
-
-  const important = [
     pose[11],
     pose[12],
     pose[23],
@@ -1619,11 +1323,17 @@ function processPose(
     pose[26],
     pose[27],
     pose[28]
+
   ];
 
 
+  let confidence = 0;
+
+  let count = 0;
+
+
   for (
-    const point of important
+    const point of points
   ) {
 
     if (
@@ -1635,34 +1345,43 @@ function processPose(
       confidence +=
         point.visibility;
 
+      count++;
+
     }
 
   }
 
 
-  confidence /=
-    important.length;
+  if (count) {
 
+    confidence /=
+      count;
 
-  confidenceElement.textContent =
-    Math.round(
-      confidence * 100
-    ) + "%";
+    confidenceElement.textContent =
+      Math.round(
+        confidence * 100
+      ) + "%";
+
+  }
 
 }
 
 
-/* ======================================================
-   WALKING DETECTION
-====================================================== */
+/* =====================================================
+   WALKING
+===================================================== */
 
 function detectWalking(
   data
 ) {
 
+  if (!calibrationData)
+    return;
+
+
   if (
-    data.ankleLeftY === null ||
-    data.ankleRightY === null
+    data.kneeLeftY === null ||
+    data.kneeRightY === null
   ) {
 
     return;
@@ -1670,66 +1389,40 @@ function detectWalking(
   }
 
 
+  /*
+   * When the knee is lifted,
+   * its Y becomes smaller.
+   */
+
   const leftLift =
-    data.hipY -
-    data.ankleLeftY;
+    calibrationData.kneeLeftY -
+    data.kneeLeftY;
 
 
   const rightLift =
-    data.hipY -
-    data.ankleRightY;
-
-
-  /*
-   * Larger value means
-   * foot is higher relative
-   * to hip.
-   */
-
-  ankleHistory.push({
-
-    time:
-      performance.now(),
-
-    left:
-      leftLift,
-
-    right:
-      rightLift
-
-  });
-
-
-  if (
-    ankleHistory.length >
-    MAX_HISTORY
-  ) {
-
-    ankleHistory.shift();
-
-  }
+    calibrationData.kneeRightY -
+    data.kneeRightY;
 
 
   const threshold =
-    0.055;
+    0.035;
 
 
   /*
-   * LEFT FOOT
+   * LEFT STEP
    */
 
   if (
-    leftLift >
-    threshold &&
-    !leftFootUp
+    leftLift > threshold &&
+    !leftUp
   ) {
 
-    leftFootUp =
+    leftUp =
       true;
 
 
     registerStep(
-      "left"
+      "ซ้าย"
     );
 
   }
@@ -1737,31 +1430,30 @@ function detectWalking(
 
   if (
     leftLift <
-    threshold * 0.55
+    threshold * .45
   ) {
 
-    leftFootUp =
+    leftUp =
       false;
 
   }
 
 
   /*
-   * RIGHT FOOT
+   * RIGHT STEP
    */
 
   if (
-    rightLift >
-    threshold &&
-    !rightFootUp
+    rightLift > threshold &&
+    !rightUp
   ) {
 
-    rightFootUp =
+    rightUp =
       true;
 
 
     registerStep(
-      "right"
+      "ขวา"
     );
 
   }
@@ -1769,35 +1461,19 @@ function detectWalking(
 
   if (
     rightLift <
-    threshold * 0.55
+    threshold * .45
   ) {
 
-    rightFootUp =
+    rightUp =
       false;
 
   }
 
 
-  /*
-   * Determine walking state
-   */
-
-  const now =
-    performance.now();
-
-
-  const recent =
-    ankleHistory.filter(
-      item =>
-        now - item.time <
-        1200
-    );
-
-
   const walking =
-    recent.length >= 8 &&
-    now - lastStepTime <
-    1000;
+    performance.now() -
+    lastStepTime <
+    900;
 
 
   if (walking) {
@@ -1809,37 +1485,40 @@ function detectWalking(
     movementIcon.textContent =
       "🚶";
 
+
     movementText.textContent =
       "กำลังเดิน";
 
 
-  } else {
+    status.textContent =
+      "🚶 เดินอยู่กับที่";
+
+  }
+
+  else if (
+    turnStateValue ===
+    "NONE"
+  ) {
 
     walkState.textContent =
       "หยุด";
 
 
-    if (
-      currentTurn ===
-      "NONE"
-    ) {
+    movementIcon.textContent =
+      "🧍";
 
-      movementIcon.textContent =
-        "🧍";
 
-      movementText.textContent =
-        "หยุด";
-
-    }
+    movementText.textContent =
+      "หยุด";
 
   }
 
 }
 
 
-/* ======================================================
-   STEP REGISTER
-====================================================== */
+/* =====================================================
+   STEP
+===================================================== */
 
 function registerStep(
   side
@@ -1849,14 +1528,10 @@ function registerStep(
     performance.now();
 
 
-  /*
-   * Prevent duplicate steps
-   */
-
   if (
     now -
     lastStepTime <
-    280
+    250
   ) {
 
     return;
@@ -1876,16 +1551,16 @@ function registerStep(
 
 
   console.log(
-    "STEP:",
+    "STEP",
     side
   );
 
 }
 
 
-/* ======================================================
-   TURN DETECTION
-====================================================== */
+/* =====================================================
+   TURN
+===================================================== */
 
 function detectTurning(
   data
@@ -1896,8 +1571,8 @@ function detectTurning(
 
 
   /*
-   * Signal 1:
-   * shoulder depth difference
+   * Shoulder depth changes
+   * when body rotates.
    */
 
   const depthDelta =
@@ -1906,126 +1581,391 @@ function detectTurning(
 
 
   /*
-   * Signal 2:
-   * nose relative to torso
+   * Shoulder width becomes
+   * smaller when the body turns.
+   */
+
+  const widthRatio =
+    data.shoulderWidth /
+    calibrationData.shoulderWidth;
+
+
+  /*
+   * Nose offset relative
+   * to torso.
    */
 
   const noseOffset =
-    data.noseX -
-    data.torsoX;
+    (
+      data.noseX -
+      data.centerX
+    )
+    -
+    calibrationData.noseOffset;
 
 
   /*
-   * Combine them.
+   * Main turning signal.
    *
-   * We deliberately keep the
-   * threshold conservative.
+   * We keep this conservative.
    */
-
-  const depthSignal =
-    depthDelta * 5;
-
-
-  const headSignal =
-    noseOffset * 2;
-
 
   const signal =
-    depthSignal +
-    headSignal;
+    (
+      depthDelta * 4
+    )
+    +
+    (
+      noseOffset * 1.5
+    );
 
-
-  turnHistory.push(
-    signal
-  );
-
-
-  if (
-    turnHistory.length >
-    MAX_TURN_HISTORY
-  ) {
-
-    turnHistory.shift();
-
-  }
-
-
-  /*
-   * Moving average
-   */
-
-  const average =
-    turnHistory.reduce(
-      (a, b) => a + b,
-      0
-    ) /
-    turnHistory.length;
-
-
-  turnScore =
-    average;
-
-
-  /*
-   * DEAD ZONE
-   *
-   * This prevents tiny movements
-   * from constantly turning the game.
-   */
 
   const threshold =
     0.045;
 
 
+  /*
+   * Require shoulders to
+   * remain reasonably visible.
+   */
+
   if (
-    average <
-    -threshold
-  ) {
-
-    currentTurn =
-      "LEFT";
-
-
-    turnState.textContent =
-      "↩️ ซ้าย";
-
-
-    movementIcon.textContent =
-      "↩️";
-
-
-    movementText.textContent =
-      "หันซ้าย";
-
-
-  }
-
-  else if (
-    average >
+    widthRatio < .82 &&
+    Math.abs(signal) >
     threshold
   ) {
 
-    currentTurn =
-      "RIGHT";
+    if (
+      signal < 0
+    ) {
+
+      turnStateValue =
+        "LEFT";
 
 
-    turnState.textContent =
-      "ขวา ↪️";
+      turnState.textContent =
+        "↩️ ซ้าย";
 
 
-    movementIcon.textContent =
-      "↪️";
+      movementIcon.textContent =
+        "↩️";
 
 
-    movementText.textContent =
-      "หันขวา";
+      movementText.textContent =
+        "หันซ้าย";
+
+
+      status.textContent =
+        "↩️ หันซ้าย";
+
+
+    }
+
+    else {
+
+      turnStateValue =
+        "RIGHT";
+
+
+      turnState.textContent =
+        "ขวา ↪️";
+
+
+      movementIcon.textContent =
+        "↪️";
+
+
+      movementText.textContent =
+        "หันขวา";
+
+
+      status.textContent =
+        "↪️ หันขวา";
+
+    }
 
   }
 
   else {
 
-    currentTurn =
+    turnStateValue =
       "NONE";
 
 
     turnState.textContent =
+      "ตรง";
+
+  }
+
+}
+
+
+/* =====================================================
+   HAND
+===================================================== */
+
+function processHand(
+  result
+) {
+
+  const pointer =
+    document.getElementById(
+      "pointer"
+    );
+
+
+  if (
+    !result.landmarks ||
+    !result.landmarks.length
+  ) {
+
+    pointer.style.display =
+      "none";
+
+    return;
+
+  }
+
+
+  const hand =
+    result.landmarks[0];
+
+
+  const finger =
+    hand[8];
+
+
+  if (!finger)
+    return;
+
+
+  const x =
+    (
+      1 -
+      finger.x
+    ) *
+    window.innerWidth;
+
+
+  const y =
+    finger.y *
+    window.innerHeight;
+
+
+  pointer.style.display =
+    "block";
+
+
+  pointer.style.left =
+    x + "px";
+
+
+  pointer.style.top =
+    y + "px";
+
+}
+
+
+/* =====================================================
+   DRAW
+===================================================== */
+
+function drawLandmarks(
+  poseResult,
+  handResult
+) {
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  /*
+   * BODY POINTS
+   */
+
+  if (
+    poseResult &&
+    poseResult.landmarks &&
+    poseResult.landmarks.length
+  ) {
+
+    const pose =
+      poseResult.landmarks[0];
+
+
+    const indexes = [
+
+      0,
+      11,
+      12,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28
+
+    ];
+
+
+    for (
+      const index of indexes
+    ) {
+
+      const p =
+        pose[index];
+
+
+      if (!p)
+        continue;
+
+
+      const x =
+        (
+          1 -
+          p.x
+        ) *
+        canvas.width;
+
+
+      const y =
+        p.y *
+        canvas.height;
+
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x,
+        y,
+        6,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        "rgba(70,220,140,.95)";
+
+      ctx.fill();
+
+    }
+
+  }
+
+
+  /*
+   * INDEX FINGER
+   */
+
+  if (
+    handResult &&
+    handResult.landmarks &&
+    handResult.landmarks.length
+  ) {
+
+    const p =
+      handResult
+        .landmarks[0][8];
+
+
+    if (p) {
+
+      const x =
+        (
+          1 -
+          p.x
+        ) *
+        canvas.width;
+
+
+      const y =
+        p.y *
+        canvas.height;
+
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x,
+        y,
+        14,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.strokeStyle =
+        "rgba(255,209,102,.95)";
+
+      ctx.lineWidth =
+        4;
+
+      ctx.stroke();
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   UTILITIES
+===================================================== */
+
+function distance(
+  a,
+  b
+) {
+
+  const dx =
+    a.x - b.x;
+
+  const dy =
+    a.y - b.y;
+
+
+  return Math.sqrt(
+    dx * dx +
+    dy * dy
+  );
+
+}
+
+
+function resizeCanvas() {
+
+  canvas.width =
+    window.innerWidth;
+
+  canvas.height =
+    window.innerHeight;
+
+}
+
+
+function wait(ms) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
+
+}
+
+
+window.addEventListener(
+  "resize",
+  resizeCanvas
+);
+
+</script>
+
+</body>
+</html>
