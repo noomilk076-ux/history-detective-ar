@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 2.4</title>
+<title>History Detective AR — Museum Prototype 2.6</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 2.4 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 2.6 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -96,6 +96,9 @@ let HandLandmarker,PoseLandmarker,FilesetResolver;
 let handLandmarker=null,poseLandmarker=null;
 let running=false,lastVideoTime=-1,calibrationData=null;
 let stepCount=0,lastStepTime=0,leftUp=false,rightUp=false;
+let leftRaiseSince=0,rightRaiseSince=0;
+let lastWalkSide="";
+let leftRaiseSmooth=null,rightRaiseSmooth=null;
 let turnCandidate="NONE",turnCandidateFrames=0,turnStateValue="NONE",lastTurnChange=0;
 let shoulderHistory=[];
 let walkHistory=[];
@@ -104,13 +107,15 @@ let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null
 let wallRects=[];
 let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 
-const TURN_THRESHOLD=0.035;
-const TURN_RELEASE=0.018;
-const TURN_CONFIRM_FRAMES=4;
-const TURN_COOLDOWN=450;
-const ARM_RAISE_THRESHOLD=0.055;
-const ARM_RELEASE_THRESHOLD=0.025;
-const ARM_STEP_COOLDOWN=300;
+const TURN_THRESHOLD=0.055;
+const TURN_RELEASE=0.028;
+const TURN_CONFIRM_FRAMES=8;
+const TURN_COOLDOWN=900;
+const ARM_RAISE_THRESHOLD=0.115;
+const ARM_RELEASE_THRESHOLD=0.035;
+const ARM_STEP_COOLDOWN=1050;
+const ARM_RAISE_HOLD_MS=180;
+const WALK_STEP_DISTANCE=0.20;
 const POINTER_SMOOTHING=0.25;
 const THREE_URL="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
@@ -184,7 +189,7 @@ function resize3D(){
 window.addEventListener("resize",resize3D);
 
 function moveForward(){
-  const a=.85;
+  const a=WALK_STEP_DISTANCE;
   const nx=targetX+Math.sin(targetYaw)*a;
   const nz=targetZ-Math.cos(targetYaw)*a;
   if(nx<-13.2||nx>13.2||nz<-13.2||nz>13.2||blocked(nx,nz))return false;
@@ -387,7 +392,7 @@ async function runCalibration(){
   };
   shoulderHistory=[];
   walkHistory=[];
-  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;
+  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;leftRaiseSince=0;rightRaiseSince=0;lastWalkSide="";leftRaiseSmooth=null;rightRaiseSmooth=null;registerStep.lastSide="";
   stepCountElement.textContent="0";
   calibration.style.display="none";
 }
@@ -448,36 +453,58 @@ function processPose(result){
 function detectWalking(data){
   if(data.leftWristY==null||data.rightWristY==null||data.leftShoulderY==null||data.rightShoulderY==null||!calibrationData)return;
 
-  // กล้องเห็นเพียงครึ่งตัว จึงใช้การยกแขนสลับซ้าย–ขวาแทนการตรวจเข่า/เท้า
-  const leftRaise=data.leftShoulderY-data.leftWristY;
-  const rightRaise=data.rightShoulderY-data.rightWristY;
+  // กล้องเห็นครึ่งตัว: ใช้ระยะข้อมือ-ไหล่ แต่กรองสัญญาณให้เกิด "1 จังหวะ = 1 ก้าว"
+  const rawLeft=data.leftShoulderY-data.leftWristY;
+  const rawRight=data.rightShoulderY-data.rightWristY;
+  leftRaiseSmooth=leftRaiseSmooth==null?rawLeft:leftRaiseSmooth*.72+rawLeft*.28;
+  rightRaiseSmooth=rightRaiseSmooth==null?rawRight:rightRaiseSmooth*.72+rawRight*.28;
+  const now=performance.now();
+  const leftRaised=leftRaiseSmooth>ARM_RAISE_THRESHOLD;
+  const rightRaised=rightRaiseSmooth>ARM_RAISE_THRESHOLD;
 
-  if(leftRaise>ARM_RAISE_THRESHOLD&&!leftUp){
+  // ต้องยกค้างเล็กน้อยก่อนนับ เพื่อกันการสั่นของ landmark
+  if(leftRaised){
+    if(!leftRaiseSince)leftRaiseSince=now;
+  }else if(leftRaiseSmooth<ARM_RELEASE_THRESHOLD){
+    leftRaiseSince=0;
+    leftUp=false;
+  }
+  if(rightRaised){
+    if(!rightRaiseSince)rightRaiseSince=now;
+  }else if(rightRaiseSmooth<ARM_RELEASE_THRESHOLD){
+    rightRaiseSince=0;
+    rightUp=false;
+  }
+
+  // ต้องสลับข้าง และอีกข้างต้องอยู่ต่ำก่อน จึงจะนับก้าวใหม่
+  const leftReady=leftRaised&&!leftUp&&now-leftRaiseSince>=ARM_RAISE_HOLD_MS&&rightRaiseSmooth<ARM_RELEASE_THRESHOLD;
+  const rightReady=rightRaised&&!rightUp&&now-rightRaiseSince>=ARM_RAISE_HOLD_MS&&leftRaiseSmooth<ARM_RELEASE_THRESHOLD;
+
+  if(leftReady&&lastWalkSide!=="ซ้าย"){
     leftUp=true;
+    lastWalkSide="ซ้าย";
     registerStep("ซ้าย");
   }
-  if(leftRaise<ARM_RELEASE_THRESHOLD)leftUp=false;
-
-  if(rightRaise>ARM_RAISE_THRESHOLD&&!rightUp){
+  if(rightReady&&lastWalkSide!=="ขวา"){
     rightUp=true;
+    lastWalkSide="ขวา";
     registerStep("ขวา");
   }
-  if(rightRaise<ARM_RELEASE_THRESHOLD)rightUp=false;
 
-  const walking=performance.now()-lastStepTime<900;
+  const walking=now-lastStepTime<1200;
   walkState.textContent=walking?"🚶 เดิน":"หยุด";
   if(walking&&turnStateValue==="NONE"){
     movementIcon.textContent="🚶";
     movementText.textContent="กำลังเดิน";
-    status.textContent="🚶 ยกแขนซ้าย–ขวาสลับเพื่อเดิน";
+    status.textContent="🚶 ขยับแขนซ้าย–ขวาช้า ๆ สลับกัน";
   }else if(!walking&&turnStateValue==="NONE"){
     movementIcon.textContent="🧍";
-    movementText.textContent="ตรง";
+    movementText.textContent="พร้อม";
   }
 
-  // แสดงสถานะการยกแขนในช่อง Debug เพื่อช่วยทดสอบกับ iPad
-  if(leftRaise>ARM_RAISE_THRESHOLD || rightRaise>ARM_RAISE_THRESHOLD){
-    const side=leftRaise>rightRaise?"ซ้าย":"ขวา";
+  // Debug: แสดงระดับการยกแขนเป็นเปอร์เซ็นต์โดยประมาณ
+  const side=leftRaiseSmooth>rightRaiseSmooth?"ซ้าย":"ขวา";
+  if(Math.max(leftRaiseSmooth,rightRaiseSmooth)>0.06){
     walkState.textContent=walking?`🚶 ${side}`:`👋 ${side}`;
   }
 }
@@ -485,10 +512,13 @@ function detectWalking(data){
 function registerStep(side){
   const now=performance.now();
   if(now-lastStepTime<ARM_STEP_COOLDOWN)return;
+  if(registerStep.lastSide===side)return;
+  registerStep.lastSide=side;
   lastStepTime=now;
   stepCount++;
   stepCountElement.textContent=stepCount;
-  moveForward();
+  const moved=moveForward();
+  movementText.textContent=moved?`👣 ก้าว${side}`:"🛑 ติดกำแพง";
 }
 
 function detectTurning(data){
