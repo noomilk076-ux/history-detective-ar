@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 2.3</title>
+<title>History Detective AR — Museum Prototype 2.4</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 2.3 • ห้องพิพิธภัณฑ์ 3D • จุดเบาะแส 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 2.4 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -56,7 +56,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <div id="startScreen"><div class="card">
 <h1>🏺 ภารกิจนักสืบ</h1>
 <p>ระบบจะใช้กล้องตรวจจับร่างกายและการเคลื่อนไหว</p>
-<p>🚶 ก้าวเท้าสลับ = เดินในเกม</p>
+<p>🚶 ยกแขนซ้าย–ขวาสลับ = เดินในเกม</p>
 <p>↩️ เลี้ยวซ้าย = ไหล่ขวาเข้าหากล้อง</p>
 <p>↪️ เลี้ยวขวา = ไหล่ซ้ายเข้าหากล้อง</p>
 <p>☝️ นิ้วชี้ = ตัวชี้สำหรับเลือกเบาะแส</p>
@@ -65,7 +65,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <div id="calibration"><div class="card">
 <div style="font-size:75px">🧍</div>
 <div style="font-size:clamp(28px,7vw,48px);font-weight:900">เตรียมตัวนักสืบ</div>
-<p>ยืนตรงกลางหน้ากล้อง มองตรง วางแขนสบาย ๆ และอยู่นิ่ง ๆ</p>
+<p>ยืนตรงกลางหน้ากล้อง ให้เห็นศีรษะ–ลำตัวและแขนชัด ๆ มองตรง วางแขนสบาย ๆ และอยู่นิ่ง ๆ</p>
 <div id="countdown">3</div>
 </div></div>
 </div>
@@ -108,7 +108,9 @@ const TURN_THRESHOLD=0.035;
 const TURN_RELEASE=0.018;
 const TURN_CONFIRM_FRAMES=4;
 const TURN_COOLDOWN=450;
-const WALK_KNEE_THRESHOLD=0.035;
+const ARM_RAISE_THRESHOLD=0.055;
+const ARM_RELEASE_THRESHOLD=0.025;
+const ARM_STEP_COOLDOWN=300;
 const POINTER_SMOOTHING=0.25;
 const THREE_URL="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
@@ -344,10 +346,12 @@ function getBodyData(pose){
     leftShoulderZ:ls.z,
     rightShoulderZ:rs.z,
     noseX:nose?.x??centerX,
-    kneeLeftY:lk?.y??null,
-    kneeRightY:rk?.y??null,
-    leftAnkleY:la?.y??null,
-    rightAnkleY:ra?.y??null
+    leftWristY:pose[15]?.y??null,
+    rightWristY:pose[16]?.y??null,
+    leftElbowY:pose[13]?.y??null,
+    rightElbowY:pose[14]?.y??null,
+    leftShoulderY:ls?.y??null,
+    rightShoulderY:rs?.y??null
   };
 }
 
@@ -367,7 +371,7 @@ async function runCalibration(){
   }
   if(!samples.length){
     calibration.style.display="none";
-    throw new Error("ไม่พบร่างกายระหว่าง Calibration กรุณายืนให้เห็นศีรษะ ไหล่ สะโพก และเข่า");
+    throw new Error("ไม่พบร่างกายระหว่าง Calibration กรุณายืนให้เห็นศีรษะ ไหล่ สะโพก และแขน");
   }
   const avg=k=>{
     const values=samples.map(x=>x[k]).filter(v=>typeof v==="number"&&Number.isFinite(v));
@@ -378,8 +382,8 @@ async function runCalibration(){
     leftShoulderZ:avg("leftShoulderZ"),
     rightShoulderZ:avg("rightShoulderZ"),
     shoulderWidth:avg("shoulderWidth"),
-    kneeLeftY:avg("kneeLeftY"),
-    kneeRightY:avg("kneeRightY")
+    leftShoulderY:avg("leftShoulderY"),
+    rightShoulderY:avg("rightShoulderY")
   };
   shoulderHistory=[];
   walkHistory=[];
@@ -436,29 +440,55 @@ function processPose(result){
   bodyState.textContent="✓";
   detectWalking(data);
   detectTurning(data);
-  const ids=[11,12,23,24,25,26,27,28];
+  const ids=[11,12,13,14,15,16,23,24];
   const vis=ids.map(i=>pose[i]?.visibility).filter(v=>typeof v==="number");
   confidenceElement.textContent=vis.length?Math.round(vis.reduce((a,b)=>a+b,0)/vis.length*100)+"%":"–";
 }
 
 function detectWalking(data){
-  if(data.kneeLeftY==null||data.kneeRightY==null||!calibrationData)return;
-  const leftLift=calibrationData.kneeLeftY-data.kneeLeftY;
-  const rightLift=calibrationData.kneeRightY-data.kneeRightY;
-  if(leftLift>WALK_KNEE_THRESHOLD&&!leftUp){leftUp=true;registerStep("ซ้าย")}
-  if(leftLift<WALK_KNEE_THRESHOLD*.45)leftUp=false;
-  if(rightLift>WALK_KNEE_THRESHOLD&&!rightUp){rightUp=true;registerStep("ขวา")}
-  if(rightLift<WALK_KNEE_THRESHOLD*.45)rightUp=false;
+  if(data.leftWristY==null||data.rightWristY==null||data.leftShoulderY==null||data.rightShoulderY==null||!calibrationData)return;
+
+  // กล้องเห็นเพียงครึ่งตัว จึงใช้การยกแขนสลับซ้าย–ขวาแทนการตรวจเข่า/เท้า
+  const leftRaise=data.leftShoulderY-data.leftWristY;
+  const rightRaise=data.rightShoulderY-data.rightWristY;
+
+  if(leftRaise>ARM_RAISE_THRESHOLD&&!leftUp){
+    leftUp=true;
+    registerStep("ซ้าย");
+  }
+  if(leftRaise<ARM_RELEASE_THRESHOLD)leftUp=false;
+
+  if(rightRaise>ARM_RAISE_THRESHOLD&&!rightUp){
+    rightUp=true;
+    registerStep("ขวา");
+  }
+  if(rightRaise<ARM_RELEASE_THRESHOLD)rightUp=false;
+
   const walking=performance.now()-lastStepTime<900;
   walkState.textContent=walking?"🚶 เดิน":"หยุด";
-  if(walking&&turnStateValue==="NONE"){movementIcon.textContent="🚶";movementText.textContent="กำลังเดิน";status.textContent="🚶 เดินอยู่กับที่"}
-  else if(!walking&&turnStateValue==="NONE"){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+  if(walking&&turnStateValue==="NONE"){
+    movementIcon.textContent="🚶";
+    movementText.textContent="กำลังเดิน";
+    status.textContent="🚶 ยกแขนซ้าย–ขวาสลับเพื่อเดิน";
+  }else if(!walking&&turnStateValue==="NONE"){
+    movementIcon.textContent="🧍";
+    movementText.textContent="ตรง";
+  }
+
+  // แสดงสถานะการยกแขนในช่อง Debug เพื่อช่วยทดสอบกับ iPad
+  if(leftRaise>ARM_RAISE_THRESHOLD || rightRaise>ARM_RAISE_THRESHOLD){
+    const side=leftRaise>rightRaise?"ซ้าย":"ขวา";
+    walkState.textContent=walking?`🚶 ${side}`:`👋 ${side}`;
+  }
 }
 
 function registerStep(side){
   const now=performance.now();
-  if(now-lastStepTime<250)return;
-  lastStepTime=now;stepCount++;stepCountElement.textContent=stepCount; moveForward();
+  if(now-lastStepTime<ARM_STEP_COOLDOWN)return;
+  lastStepTime=now;
+  stepCount++;
+  stepCountElement.textContent=stepCount;
+  moveForward();
 }
 
 function detectTurning(data){
