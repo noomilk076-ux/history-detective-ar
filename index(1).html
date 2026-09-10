@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>History Detective AR — Museum Prototype 2.3</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+#camera{position:absolute;right:14px;bottom:14px;width:min(240px,30vw);aspect-ratio:16/9;object-fit:cover;transform:scaleX(-1);border:3px solid rgba(255,255,255,.9);border-radius:16px;z-index:12;background:#000}
+#world{position:absolute;inset:0;width:100%;height:100%;display:block;background:#b8d7e8}
+#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:13}
+#topBar{position:absolute;top:0;left:0;right:0;padding:calc(12px + env(safe-area-inset-top)) 18px 15px;background:linear-gradient(rgba(0,0,0,.78),rgba(0,0,0,.05));z-index:20}
+#title{font-size:clamp(22px,5vw,36px);font-weight:900}
+#status{margin-top:4px;font-size:clamp(14px,3vw,21px)}
+#movement{position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);text-align:center;z-index:15;pointer-events:none}
+#movementIcon{font-size:clamp(60px,14vw,120px)}
+#movementText{margin-top:10px;padding:10px 22px;border-radius:18px;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);font-size:clamp(22px,5vw,40px);font-weight:900}
+#debug{position:absolute;left:12px;top:105px;z-index:25;min-width:205px;padding:12px 14px;border-radius:15px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);font-size:12px;line-height:1.7}
+#pointer{position:absolute;width:55px;height:55px;border-radius:50%;border:4px solid #fff;background:radial-gradient(circle,#fff 0 7px,rgba(255,255,255,.15) 8px);box-shadow:0 0 25px rgba(255,255,255,.9);transform:translate(-50%,-50%);pointer-events:none;z-index:30;display:none}
+#startScreen,#calibration{position:absolute;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:25px;text-align:center}
+#startScreen{background:radial-gradient(circle,rgba(35,72,105,.97),rgba(2,8,15,1))}
+#calibration{display:none;background:rgba(3,10,18,.8);backdrop-filter:blur(10px)}
+.card{width:min(720px,100%);padding:35px;border-radius:28px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18)}
+.card h1{margin:0 0 15px;font-size:clamp(30px,8vw,58px)}
+.card p{font-size:clamp(16px,3vw,23px);line-height:1.55}
+#startButton{margin-top:20px;padding:17px 35px;border:0;border-radius:18px;background:#ffd166;color:#201500;font-size:21px;font-weight:900}
+#countdown{margin-top:18px;font-size:clamp(55px,14vw,100px);font-weight:900;color:#ffd166}
+@media(max-width:700px){#debug{min-width:155px;font-size:10px}#camera{width:145px;bottom:10px;right:10px}#museumHint{font-size:12px;bottom:10px}}
+#museumHint{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:10;padding:9px 16px;border-radius:16px;background:rgba(10,20,35,.72);backdrop-filter:blur(8px);font-size:14px;text-align:center;white-space:nowrap}
+#loading3d{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgba(17,28,43,.82);font-weight:800;font-size:20px}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="world"></canvas>
+<video id="camera" autoplay playsinline muted></video>
+<canvas id="overlay"></canvas>
+<div id="pointer"></div>
+<div id="museumHint">🏛️ Prototype 2.3 • ห้องพิพิธภัณฑ์ 3D • จุดเบาะแส 8 จุด</div>
+<div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
+<div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
+<div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
+<div id="debug">
+<b>🔎 ระบบตรวจจับ</b><br>
+กล้อง: <span id="cameraState">–</span><br>
+ร่างกาย: <span id="bodyState">–</span><br>
+เดิน: <span id="walkState">หยุด</span><br>
+เลี้ยว: <span id="turnState">ตรง</span><br>
+ไหล่ขวา: <span id="rightShoulderState">–</span><br>
+ไหล่ซ้าย: <span id="leftShoulderState">–</span><br>
+ก้าว: <span id="stepCount">0</span><br>
+ความมั่นใจ: <span id="confidence">–</span>
+</div>
+<div id="startScreen"><div class="card">
+<h1>🏺 ภารกิจนักสืบ</h1>
+<p>ระบบจะใช้กล้องตรวจจับร่างกายและการเคลื่อนไหว</p>
+<p>🚶 ก้าวเท้าสลับ = เดินในเกม</p>
+<p>↩️ เลี้ยวซ้าย = ไหล่ขวาเข้าหากล้อง</p>
+<p>↪️ เลี้ยวขวา = ไหล่ซ้ายเข้าหากล้อง</p>
+<p>☝️ นิ้วชี้ = ตัวชี้สำหรับเลือกเบาะแส</p>
+<button id="startButton">🎥 เริ่มภารกิจ</button>
+</div></div>
+<div id="calibration"><div class="card">
+<div style="font-size:75px">🧍</div>
+<div style="font-size:clamp(28px,7vw,48px);font-weight:900">เตรียมตัวนักสืบ</div>
+<p>ยืนตรงกลางหน้ากล้อง มองตรง วางแขนสบาย ๆ และอยู่นิ่ง ๆ</p>
+<div id="countdown">3</div>
+</div></div>
+</div>
+<script type="module">
+const worldCanvas=document.getElementById("world");
+const loading3d=document.getElementById("loading3d");
+const video=document.getElementById("camera");
+const canvas=document.getElementById("overlay");
+const ctx=canvas.getContext("2d");
+const startScreen=document.getElementById("startScreen");
+const startButton=document.getElementById("startButton");
+const calibration=document.getElementById("calibration");
+const countdown=document.getElementById("countdown");
+const status=document.getElementById("status");
+const movementIcon=document.getElementById("movementIcon");
+const movementText=document.getElementById("movementText");
+const cameraState=document.getElementById("cameraState");
+const bodyState=document.getElementById("bodyState");
+const walkState=document.getElementById("walkState");
+const turnState=document.getElementById("turnState");
+const rightShoulderState=document.getElementById("rightShoulderState");
+const leftShoulderState=document.getElementById("leftShoulderState");
+const stepCountElement=document.getElementById("stepCount");
+const confidenceElement=document.getElementById("confidence");
+const pointer=document.getElementById("pointer");
+
+let HandLandmarker,PoseLandmarker,FilesetResolver;
+let handLandmarker=null,poseLandmarker=null;
+let running=false,lastVideoTime=-1,calibrationData=null;
+let stepCount=0,lastStepTime=0,leftUp=false,rightUp=false;
+let turnCandidate="NONE",turnCandidateFrames=0,turnStateValue="NONE",lastTurnChange=0;
+let shoulderHistory=[];
+let walkHistory=[];
+let smoothPointerX=0,smoothPointerY=0;
+let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null,clueObjects=[];
+let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
+
+const TURN_THRESHOLD=0.035;
+const TURN_RELEASE=0.018;
+const TURN_CONFIRM_FRAMES=4;
+const TURN_COOLDOWN=450;
+const WALK_KNEE_THRESHOLD=0.035;
+const POINTER_SMOOTHING=0.25;
+const THREE_URL="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+const HAND_MODEL="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+const POSE_MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const WASM_URL="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
+const VISION_URL="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
+
+
+let foundClues=new Set(),clueOpen=false,clueCandidate=null,clueCandidateSince=0;
+const CLUE_TRIGGER_DISTANCE=2.1,CLUE_OPEN_DELAY=650;
+const CLUE_DATA=[
+["ร่องรอยที่อยู่ใต้ผืนดิน","นักโบราณคดีพบวัตถุชิ้นนี้จากการขุดค้นในชั้นดินของแหล่งโบราณคดี วัตถุเป็นสิ่งที่หลงเหลือจากผู้คนในอดีต"],
+["แผนที่บอกช่วงเวลา","หลักฐานประเภทเดียวกันนี้ถูกพบในแหล่งโบราณคดีหลายแห่งของประเทศไทย และสัมพันธ์กับชุมชนก่อนประวัติศาสตร์"],
+["เศษชิ้นส่วนปริศนา","นักโบราณคดีต้องเก็บรวบรวมชิ้นส่วนที่พบจากการขุดค้น แล้วพิจารณารูปร่างและลักษณะของแต่ละชิ้นเพื่อศึกษาว่าเดิมเป็นสิ่งของอะไร"],
+["ร่องรอยจากดินและไฟ","วัสดุของวัตถุสามารถนำมาขึ้นรูปเป็นภาชนะ แล้วนำไปตากให้แห้งและเผาด้วยความร้อนจนแข็งตัว ภาชนะดินเผาสมัยก่อนประวัติศาสตร์มีรูปทรงหลากหลาย"],
+["รูปทรงที่ยังมองไม่ครบ","บริเวณใต้ตัวภาชนะมีส่วนยื่นออกมาจากตัวภาชนะเพื่อช่วยรองรับน้ำหนัก"],
+["สามส่วนที่ซ่อนอยู่","ส่วนที่ยื่นออกมาจากตัวภาชนะไม่ได้มีเพียงหนึ่งหรือสองส่วน แต่มีจำนวนเท่ากันรอบตัวภาชนะ ลองสังเกตและนับด้วยตนเอง"],
+["หลักฐานจากแหล่งโบราณคดี","จากการศึกษาหลักฐานทางโบราณคดี พบภาชนะดินเผารูปแบบหนึ่งที่มีส่วนรองรับ 3 ส่วน เรียกว่า “ภาชนะสามขา” และพบในแหล่งโบราณคดีก่อนประวัติศาสตร์หลายแห่ง"],
+["แฟ้มลับจากนักโบราณคดี","หลักฐานที่นักสืบกำลังตามหาเป็นภาชนะดินเผาจากชุมชนก่อนประวัติศาสตร์ มีลักษณะคล้ายอ่าง และมีขาอ้วนเตี้ยสำหรับรองรับตัวภาชนะ"]
+];
+
+function mat(c,r=.65,m=0){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m})}
+function box3(w,h,d,c,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;museumRoot.add(o);return o}
+function labelSprite(t){
+ const c=document.createElement("canvas"),g=c.getContext("2d");c.width=512;c.height=128;
+ g.fillStyle="rgba(255,255,255,.94)";g.roundRect(8,8,496,112,22);g.fill();
+ g.fillStyle="#182235";g.font="900 38px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText(t,256,64);
+ const tex=new THREE.CanvasTexture(c),s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));
+ s.scale.set(3.5,.88,1);return s;
+}
+function addWall(w,h,d,x,y,z,color=0xe8dcc8){
+  const o=box(w,h,d,color,x,y,z);
+  wallRects.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2});
+  return o;
+}
+function buildMuseum(){
+  box(30,.3,30,0xd8c6aa,0,-.15,0);
+  wallRects=[];
+  // Perimeter
+  addWall(30,6,.35,0,3,-15); addWall(.35,6,30,-15,3,0);
+  addWall(.35,6,30,15,3,0); addWall(30,6,.35,0,3,15);
+  // S-shaped maze walls with door gaps
+  addWall(18,5,.3,-6,2.5,5.2);
+  addWall(18,5,.3,6,2.5,-5.2);
+  addWall(.3,5,9,-5.2,2.5,10.2);
+  addWall(.3,5,9,5.2,2.5,0);
+  addWall(.3,5,9,-5.2,2.5,-10.2);
+  // Back exhibition panels
+  for(let x=-12;x<=12;x+=4) box(3.4,4.2,.12,0xf4ead7,x,2.3,-14.78);
+  // Room identity panels and arch-like door frames.
+  const roomPanels=[
+    [-10,0,10.05,0xf6d6a8], [0,0,10.05,0xcfe5f2], [10,0,10.05,0xd7f0d2],
+    [10,0,-.2,0xf1d1e5], [0,0,-10.05,0xd8d1f4], [-10,0,-10.05,0xf4dfb8]
+  ];
+  roomPanels.forEach(([x,_,z,c])=>{
+    box(5.8,.08,5.8,c,x,.02,z);
+    box(5.2,.05,5.2,0xffffff,x,.07,z);
+  });
+  // Decorative door portals at the S turns.
+  [[0,3.1,5.15],[0,3.1,-5.15],[5.15,3.1,0],[-5.15,3.1,0]].forEach(([x,y,z])=>{
+    const horizontal=Math.abs(x)<1;
+    const w=horizontal?3.0:.3, d=horizontal?.3:3.0;
+    box(w,.28,d,0xffd166,x,y,z);
+    box(horizontal?.28:3.0,3.0,horizontal?3.0:.28,0x9fb6c8,x,1.5,z);
+  });
+  // Small blocky display plinths around rooms (not clue objects).
+  [[-12,7],[12,7],[-12,-7],[12,-7]].forEach(([x,z])=>{
+    box(1.4,.55,1.4,0xb78d5b,x,.28,z);
+    box(.85,.65,.85,0x86a4b8,x,.88,z);
+  });
+  // Central covered mystery display
+  box(4.8,.22,4.8,0x8a6b4e,0,.12,0);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(4.5,3.2,4.5),new THREE.MeshPhysicalMaterial({color:0xcdeeff,transparent:true,opacity:.16,roughness:.08,metalness:.05,transmission:.2}));
+  glass.position.set(0,1.75,0); museumRoot.add(glass);
+  box(4.3,2.5,4.3,0x5d4635,0,1.55,0);
+  const cover=new THREE.Mesh(new THREE.BoxGeometry(4.36,2.65,4.36),new THREE.MeshStandardMaterial({color:0x3c4658,roughness:.9}));
+  cover.position.set(0,1.65,0); museumRoot.add(cover);
+  const mystery=textSprite('หลักฐานปริศนา'); mystery.position.set(0,4.1,0); museumRoot.add(mystery);
+  // Eight floating clue objects; clue numbers are shuffled each game.
+  const slots=[[-11,1.55,11],[-8,1.55,8],[-2.2,1.55,8],[11,1.55,8],[11,1.55,2.2],[2.2,1.55,-8],[-11,1.55,-8],[-8,1.55,-11]];
+  const order=[0,1,2,3,4,5,6,7].sort(()=>Math.random()-.5);
+  slots.forEach((p,i)=>{
+    const clueIndex=order[i]+1;
+    const g=new THREE.Group(); g.position.set(p[0],p[1],p[2]); g.userData={clue:clueIndex,baseY:p[1]};
+    const orb=new THREE.Mesh(new THREE.SphereGeometry(.34,20,20),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0x6b4c00,emissiveIntensity:1.3,roughness:.35}));
+    orb.castShadow=true; g.add(orb);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.58,.055,10,32),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x9aa8b8,emissiveIntensity:.8,roughness:.3}));
+    ring.rotation.x=Math.PI/2; g.add(ring);
+    const label=textSprite('🔎'); label.position.set(0,.9,0); label.scale.set(.9,.9,1); g.add(label);
+    museumRoot.add(g); clueObjects.push(g);
+  });
+  // Room labels
+  [['ห้องขุดค้น',-10,2.7,11.8],['ห้องแผนที่',0,2.7,8.7],['ห้องหลักฐาน',10,2.7,8.7],['ห้องวิเคราะห์',10,2.7,0.9],['ห้องเครื่องปั้น',0,2.7,-8.7],['ห้องนักสืบ',-10,2.7,-8.7]].forEach(([t,x,y,z])=>{const l=textSprite(t);l.position.set(x,y,z);l.scale.set(2.5,.6,1);museumRoot.add(l)});
+  // Simple museum props
+  [-10,10].forEach(x=>{box(2.8,.35,1,0x9b7655,x,.45,3.2);box(.25,1,.8,0x9b7655,x-1,.1,3.2);box(.25,1,.8,0x9b7655,x+1,.1,3.2)});
+}
+
+function blocked(nx,nz){
+  const r=.55;
+  return wallRects.some(w=>nx+r>w.minX&&nx-r<w.maxX&&nz+r>w.minZ&&nz-r<w.maxZ);
+}
+
+function animate3D(){requestAnimationFrame(animate3D);if(!renderer)return;const dt=Math.min(clock.getDelta(),.05);cameraX+=(targetX-cameraX)*(1-Math.pow(.0005,dt));cameraZ+=(targetZ-cameraZ)*(1-Math.pow(.0005,dt));cameraYaw+=(targetYaw-cameraYaw)*(1-Math.pow(.0005,dt));camera3d.position.set(cameraX,2.15,cameraZ);camera3d.rotation.y=cameraYaw;const t=performance.now()*.002;clueObjects.forEach((o,i)=>{if(o.visible)o.position.y=o.userData.baseY+Math.sin(t+i)*.18});checkClueCollision();renderer.render(scene,camera3d)}
+
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function distance(a,b){const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy)}
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+window.addEventListener("resize",resizeCanvas);
+
+async function openCamera(){
+  status.textContent="📷 กำลังเปิดกล้อง...";
+  cameraState.textContent="กำลังเปิด";
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error("Browser ไม่รองรับกล้อง");
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
+  video.srcObject=stream;
+  await video.play();
+  cameraState.textContent="✓";
+  status.textContent="📷 กล้องพร้อมแล้ว";
+  resizeCanvas();
+}
+
+async function loadMediaPipe(){
+  status.textContent="🧠 กำลังโหลดระบบตรวจจับ...";
+  ({HandLandmarker,PoseLandmarker,FilesetResolver}=await import(VISION_URL));
+  const vision=await FilesetResolver.forVisionTasks(WASM_URL);
+  status.textContent="🧠 กำลังโหลดระบบร่างกาย...";
+  poseLandmarker=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:POSE_MODEL,delegate:"GPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+  status.textContent="🧠 กำลังโหลดระบบนิ้ว...";
+  handLandmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:HAND_MODEL,delegate:"GPU"},runningMode:"VIDEO",numHands:1,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
+  status.textContent="✓ ระบบตรวจจับพร้อมแล้ว";
+}
+
+function getBodyData(pose){
+  const nose=pose[0],ls=pose[11],rs=pose[12],lh=pose[23],rh=pose[24],lk=pose[25],rk=pose[26],la=pose[27],ra=pose[28];
+  if(!ls||!rs||!lh||!rh)return null;
+  const centerX=(ls.x+rs.x+lh.x+rh.x)/4;
+  return {
+    centerX,
+    shoulderWidth:distance(ls,rs),
+    shoulderDepth:rs.z-ls.z,
+    leftShoulderZ:ls.z,
+    rightShoulderZ:rs.z,
+    noseX:nose?.x??centerX,
+    kneeLeftY:lk?.y??null,
+    kneeRightY:rk?.y??null,
+    leftAnkleY:la?.y??null,
+    rightAnkleY:ra?.y??null
+  };
+}
+
+async function runCalibration(){
+  calibration.style.display="flex";
+  const samples=[];
+  for(let n=3;n>=1;n--){countdown.textContent=n;await wait(800)}
+  countdown.textContent="●";
+  const start=performance.now();
+  while(performance.now()-start<1800){
+    const result=poseLandmarker.detectForVideo(video,performance.now());
+    if(result?.landmarks?.length){
+      const d=getBodyData(result.landmarks[0]);
+      if(d)samples.push(d);
+    }
+    await wait(60);
+  }
+  if(!samples.length){
+    calibration.style.display="none";
+    throw new Error("ไม่พบร่างกายระหว่าง Calibration กรุณายืนให้เห็นศีรษะ ไหล่ สะโพก และเข่า");
+  }
+  const avg=k=>{
+    const values=samples.map(x=>x[k]).filter(v=>typeof v==="number"&&Number.isFinite(v));
+    return values.length?values.reduce((s,v)=>s+v,0)/values.length:0;
+  };
+  calibrationData={
+    shoulderDepth:avg("shoulderDepth"),
+    leftShoulderZ:avg("leftShoulderZ"),
+    rightShoulderZ:avg("rightShoulderZ"),
+    shoulderWidth:avg("shoulderWidth"),
+    kneeLeftY:avg("kneeLeftY"),
+    kneeRightY:avg("kneeRightY")
+  };
+  shoulderHistory=[];
+  walkHistory=[];
+  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;
+  stepCountElement.textContent="0";
+  calibration.style.display="none";
+}
+
+startButton.addEventListener("click",async()=>{
+  try{
+    startButton.disabled=true;
+    await openCamera();
+    startScreen.style.display="none";
+    await init3D();
+    await loadMediaPipe();
+    await runCalibration();
+    running=true;
+    status.textContent="พร้อมแล้ว — ลองก้าวและเลี้ยว";
+    movementIcon.textContent="🧍";
+    movementText.textContent="พร้อมแล้ว";
+    requestAnimationFrame(detectFrame);
+  }catch(error){
+    console.error(error);
+    status.textContent="❌ เริ่มระบบไม่สำเร็จ";
+    startButton.disabled=false;
+    startButton.textContent="ลองอีกครั้ง";
+    alert("ไม่สามารถเริ่มระบบได้\n\n"+error.message);
+  }
+});
+
+function detectFrame(){
+  if(!running)return;
+  if(video.readyState>=2&&video.currentTime!==lastVideoTime){
+    lastVideoTime=video.currentTime;
+    const timestamp=performance.now();
+    let poseResult=null,handResult=null;
+    try{poseResult=poseLandmarker.detectForVideo(video,timestamp)}catch(e){console.warn("Pose:",e)}
+    try{handResult=handLandmarker.detectForVideo(video,timestamp)}catch(e){console.warn("Hand:",e)}
+    if(poseResult)processPose(poseResult);
+    if(handResult)processHand(handResult);
+    drawLandmarks(poseResult,handResult);
+  }
+  requestAnimationFrame(detectFrame);
+}
+
+function processPose(result){
+  if(!result.landmarks?.length){
+    bodyState.textContent="ไม่พบ";
+    confidenceElement.textContent="–";
+    return;
+  }
+  const pose=result.landmarks[0],data=getBodyData(pose);
+  if(!data)return;
+  bodyState.textContent="✓";
+  detectWalking(data);
+  detectTurning(data);
+  const ids=[11,12,23,24,25,26,27,28];
+  const vis=ids.map(i=>pose[i]?.visibility).filter(v=>typeof v==="number");
+  confidenceElement.textContent=vis.length?Math.round(vis.reduce((a,b)=>a+b,0)/vis.length*100)+"%":"–";
+}
+
+function detectWalking(data){
+  if(data.kneeLeftY==null||data.kneeRightY==null||!calibrationData)return;
+  const leftLift=calibrationData.kneeLeftY-data.kneeLeftY;
+  const rightLift=calibrationData.kneeRightY-data.kneeRightY;
+  if(leftLift>WALK_KNEE_THRESHOLD&&!leftUp){leftUp=true;registerStep("ซ้าย")}
+  if(leftLift<WALK_KNEE_THRESHOLD*.45)leftUp=false;
+  if(rightLift>WALK_KNEE_THRESHOLD&&!rightUp){rightUp=true;registerStep("ขวา")}
+  if(rightLift<WALK_KNEE_THRESHOLD*.45)rightUp=false;
+  const walking=performance.now()-lastStepTime<900;
+  walkState.textContent=walking?"🚶 เดิน":"หยุด";
+  if(walking&&turnStateValue==="NONE"){movementIcon.textContent="🚶";movementText.textContent="กำลังเดิน";status.textContent="🚶 เดินอยู่กับที่"}
+  else if(!walking&&turnStateValue==="NONE"){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+}
+
+function registerStep(side){
+  const now=performance.now();
+  if(now-lastStepTime<250)return;
+  lastStepTime=now;stepCount++;stepCountElement.textContent=stepCount; moveForward();
+}
+
+function detectTurning(data){
+  if(!calibrationData)return;
+  const rightDelta=data.rightShoulderZ-calibrationData.rightShoulderZ;
+  const leftDelta=data.leftShoulderZ-calibrationData.leftShoulderZ;
+  const rightTowardCamera=-rightDelta;
+  const leftTowardCamera=-leftDelta;
+  const signalLeft=rightTowardCamera-Math.max(0,leftTowardCamera)*.35;
+  const signalRight=leftTowardCamera-Math.max(0,rightTowardCamera)*.35;
+  const candidate=signalLeft>TURN_THRESHOLD&&signalLeft>signalRight?"LEFT":signalRight>TURN_THRESHOLD&&signalRight>signalLeft?"RIGHT":"NONE";
+  rightShoulderState.textContent=rightTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  leftShoulderState.textContent=leftTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  if(candidate==="NONE"){
+    if(turnStateValue!=="NONE"&&Math.max(signalLeft,signalRight)<TURN_RELEASE){
+      turnStateValue="NONE";turnCandidate="NONE";turnCandidateFrames=0;
+      turnState.textContent="ตรง";
+      if(performance.now()-lastStepTime>900){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+    }
+    return;
+  }
+  if(candidate===turnCandidate)turnCandidateFrames++;else{turnCandidate=candidate;turnCandidateFrames=1}
+  if(turnCandidateFrames>=TURN_CONFIRM_FRAMES&&performance.now()-lastTurnChange>TURN_COOLDOWN){
+    turnStateValue=candidate;lastTurnChange=performance.now();
+    if(candidate==="LEFT"){
+      turnState.textContent="↩️ ซ้าย";movementIcon.textContent="↩️";movementText.textContent="เลี้ยวซ้าย";status.textContent="↩️ เลี้ยวซ้าย"; updateWorldTurn();
+    }else{
+      turnState.textContent="ขวา ↪️";movementIcon.textContent="↪️";movementText.textContent="เลี้ยวขวา";status.textContent="↪️ เลี้ยวขวา"; updateWorldTurn();
+    }
+  }
+}
+
+function processHand(result){
+  if(!result.landmarks?.length){pointer.style.display="none";return}
+  const finger=result.landmarks[0][8];
+  if(!finger)return;
+  const x=(1-finger.x)*innerWidth,y=finger.y*innerHeight;
+  smoothPointerX+=(x-smoothPointerX)*POINTER_SMOOTHING;
+  smoothPointerY+=(y-smoothPointerY)*POINTER_SMOOTHING;
+  pointer.style.display="block";
+  pointer.style.left=smoothPointerX+"px";
+  pointer.style.top=smoothPointerY+"px";
+}
+
+function drawLandmarks(poseResult,handResult){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(poseResult?.landmarks?.length){
+    const pose=poseResult.landmarks[0];
+    [0,11,12,23,24,25,26,27,28].forEach(i=>{
+      const p=pose[i];if(!p)return;
+      const x=(1-p.x)*canvas.width,y=p.y*canvas.height;
+      ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle="rgba(70,220,140,.95)";ctx.fill();
+    });
+  }
+  if(handResult?.landmarks?.length){
+    const p=handResult.landmarks[0][8];
+    if(p){
+      const x=(1-p.x)*canvas.width,y=p.y*canvas.height;
+      ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.strokeStyle="rgba(255,209,102,.95)";ctx.lineWidth=4;ctx.stroke();
+    }
+  }
+}
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)running=false;
+  else if(video.srcObject&&calibrationData&&!running){running=true;lastVideoTime=-1;requestAnimationFrame(detectFrame)}
+});
+</script>
+</body>
+</html>
