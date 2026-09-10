@@ -101,6 +101,7 @@ let shoulderHistory=[];
 let walkHistory=[];
 let smoothPointerX=0,smoothPointerY=0;
 let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null,clueObjects=[];
+let wallRects=[];
 let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 
 const TURN_THRESHOLD=0.035;
@@ -132,6 +133,8 @@ const CLUE_DATA=[
 
 function mat(c,r=.65,m=0){return new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m})}
 function box3(w,h,d,c,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;museumRoot.add(o);return o}
+function box(w,h,d,c,x,y,z){return box3(w,h,d,c,x,y,z)}
+function textSprite(t){return labelSprite(t)}
 function labelSprite(t){
  const c=document.createElement("canvas"),g=c.getContext("2d");c.width=512;c.height=128;
  g.fillStyle="rgba(255,255,255,.94)";g.roundRect(8,8,496,112,22);g.fill();
@@ -144,6 +147,95 @@ function addWall(w,h,d,x,y,z,color=0xe8dcc8){
   wallRects.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2});
   return o;
 }
+async function init3D(){
+  status.textContent="🏛️ กำลังเตรียมพิพิธภัณฑ์ 3D...";
+  THREE=await import(THREE_URL);
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x9db5c7);
+  scene.fog=new THREE.Fog(0x9db5c7,22,42);
+  camera3d=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,100);
+  cameraX=targetX=0; cameraZ=targetZ=13; cameraYaw=targetYaw=0;
+  camera3d.position.set(cameraX,2.15,cameraZ);
+  renderer=new THREE.WebGLRenderer({canvas:worldCanvas,antialias:true,alpha:false,powerPreference:"high-performance"});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));
+  renderer.setSize(innerWidth,innerHeight,false);
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  clock=new THREE.Clock();
+  museumRoot=new THREE.Group();
+  scene.add(museumRoot);
+  scene.add(new THREE.HemisphereLight(0xfff7e8,0x40546a,2.2));
+  const sun=new THREE.DirectionalLight(0xffffff,2.6);
+  sun.position.set(8,18,6); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024);
+  scene.add(sun);
+  buildMuseum();
+  loading3d.style.display="none";
+  resize3D();
+  animate3D();
+}
+
+function resize3D(){
+  if(!renderer||!camera3d)return;
+  camera3d.aspect=innerWidth/innerHeight; camera3d.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight,false);
+}
+window.addEventListener("resize",resize3D);
+
+function moveForward(){
+  const a=.85;
+  const nx=targetX+Math.sin(targetYaw)*a;
+  const nz=targetZ-Math.cos(targetYaw)*a;
+  if(nx<-13.2||nx>13.2||nz<-13.2||nz>13.2||blocked(nx,nz))return false;
+  targetX=nx; targetZ=nz; return true;
+}
+
+function updateWorldTurn(){
+  if(turnStateValue==="LEFT") targetYaw-=Math.PI/2;
+  else if(turnStateValue==="RIGHT") targetYaw+=Math.PI/2;
+  targetYaw=((targetYaw+Math.PI)%(Math.PI*2))-Math.PI;
+}
+
+function checkClueCollision(){
+  if(clueOpen)return;
+  let nearest=null,best=Infinity;
+  clueObjects.forEach(o=>{
+    if(!o.visible)return;
+    const d=Math.hypot(o.position.x-targetX,o.position.z-targetZ);
+    if(d<best){best=d;nearest=o;}
+  });
+  if(nearest&&best<=CLUE_TRIGGER_DISTANCE){
+    if(clueCandidate!==nearest){clueCandidate=nearest;clueCandidateSince=performance.now();movementText.textContent="🔎 เข้าใกล้เบาะแส...";}
+    else if(performance.now()-clueCandidateSince>=CLUE_OPEN_DELAY){openClue(nearest.userData.clue-1);clueCandidate=null;}
+  }else{clueCandidate=null;}
+}
+
+function ensureClueModal(){
+  if(document.getElementById("clueModal"))return;
+  const el=document.createElement("div"); el.id="clueModal";
+  el.style.cssText="position:absolute;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(2,8,15,.72);backdrop-filter:blur(8px)";
+  el.innerHTML='<div style="width:min(720px,94vw);max-height:82vh;overflow:auto;padding:28px;border-radius:26px;background:#fff;color:#172033;box-shadow:0 20px 70px rgba(0,0,0,.45)"><div id="clueNo" style="font-weight:900;color:#8b6b2b"></div><h2 id="clueTitle" style="margin:8px 0 14px;font-size:clamp(25px,6vw,42px)"></h2><p id="clueText" style="font-size:clamp(18px,3.6vw,25px);line-height:1.65;margin:0"></p><button id="closeClue" style="margin-top:20px;padding:13px 25px;border:0;border-radius:14px;background:#ffd166;font-size:18px;font-weight:900">เก็บเบาะแส ✓</button></div>';
+  document.getElementById("app").appendChild(el);
+  document.getElementById("closeClue").onclick=closeClue;
+}
+
+function openClue(i){
+  if(foundClues.has(i))return;
+  foundClues.add(i); clueOpen=true;
+  const o=clueObjects.find(x=>x.userData.clue===i+1); if(o)o.visible=false;
+  ensureClueModal();
+  document.getElementById("clueNo").textContent=`เบาะแสที่ ${String(i+1).padStart(2,"0")} • พบแล้ว ${foundClues.size}/8`;
+  document.getElementById("clueTitle").textContent=CLUE_DATA[i][0];
+  document.getElementById("clueText").textContent=CLUE_DATA[i][1];
+  document.getElementById("clueModal").style.display="flex";
+  status.textContent=`🔎 พบเบาะแส ${foundClues.size}/8`;
+}
+
+function closeClue(){
+  clueOpen=false; document.getElementById("clueModal").style.display="none";
+  movementIcon.textContent="🧍"; movementText.textContent=foundClues.size===8?"ครบ 8 เบาะแสแล้ว":"ออกตามหาเบาะแสต่อ";
+  if(foundClues.size===8)status.textContent="🎉 พบเบาะแสครบ 8 จุด — กลับไปที่หลักฐานปริศนา";
+}
+
 function buildMuseum(){
   box(30,.3,30,0xd8c6aa,0,-.15,0);
   wallRects=[];
@@ -300,10 +392,10 @@ startButton.addEventListener("click",async()=>{
   try{
     startButton.disabled=true;
     await openCamera();
-    startScreen.style.display="none";
     await init3D();
     await loadMediaPipe();
     await runCalibration();
+    startScreen.style.display="none";
     running=true;
     status.textContent="พร้อมแล้ว — ลองก้าวและเลี้ยว";
     movementIcon.textContent="🧍";
