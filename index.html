@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 2.6</title>
+<title>History Detective AR — Museum Prototype 2.7</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 2.6 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 2.7 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -108,16 +108,16 @@ let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null
 let wallRects=[];
 let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 
-const TURN_THRESHOLD=0.055;
-const TURN_RELEASE=0.028;
-const TURN_CONFIRM_FRAMES=8;
-const TURN_COOLDOWN=900;
-const ARM_RAISE_THRESHOLD=0.14;
-const ARM_RELEASE_THRESHOLD=0.055;
-const ARM_STEP_COOLDOWN=1250;
-const ARM_RAISE_HOLD_MS=260;
-const ARM_NEUTRAL_HOLD_MS=220;
-const WALK_STEP_DISTANCE=0.16;
+const TURN_THRESHOLD=0.040;
+const TURN_RELEASE=0.018;
+const TURN_CONFIRM_FRAMES=5;
+const TURN_COOLDOWN=650;
+const ARM_RAISE_THRESHOLD=0.15;
+const ARM_RELEASE_THRESHOLD=0.065;
+const ARM_STEP_COOLDOWN=650;
+const ARM_RAISE_HOLD_MS=150;
+const ARM_NEUTRAL_HOLD_MS=160;
+const WALK_STEP_DISTANCE=0.30;
 const POINTER_SMOOTHING=0.25;
 const THREE_URL="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
@@ -459,8 +459,8 @@ function detectWalking(data){
   // เพื่อไม่ให้การสั่นของ MediaPipe กลายเป็นหลายก้าวจากการยกแขนครั้งเดียว
   const rawLeft=data.leftShoulderY-data.leftWristY;
   const rawRight=data.rightShoulderY-data.rightWristY;
-  leftRaiseSmooth=leftRaiseSmooth==null?rawLeft:leftRaiseSmooth*.82+rawLeft*.18;
-  rightRaiseSmooth=rightRaiseSmooth==null?rawRight:rightRaiseSmooth*.82+rawRight*.18;
+  leftRaiseSmooth=leftRaiseSmooth==null?rawLeft:leftRaiseSmooth*.72+rawLeft*.28;
+  rightRaiseSmooth=rightRaiseSmooth==null?rawRight:rightRaiseSmooth*.72+rawRight*.28;
 
   const now=performance.now();
   const leftRaised=leftRaiseSmooth>ARM_RAISE_THRESHOLD;
@@ -535,22 +535,26 @@ function registerStep(side){
   movementText.textContent=moved?`👣 ก้าว${side}`:"🛑 ติดกำแพง";
 }
 
+let turnSmoothLeft=0,turnSmoothRight=0;
 function detectTurning(data){
   if(!calibrationData)return;
   const rightDelta=data.rightShoulderZ-calibrationData.rightShoulderZ;
   const leftDelta=data.leftShoulderZ-calibrationData.leftShoulderZ;
   const rightTowardCamera=-rightDelta;
   const leftTowardCamera=-leftDelta;
-  const signalLeft=rightTowardCamera-Math.max(0,leftTowardCamera)*.35;
-  const signalRight=leftTowardCamera-Math.max(0,rightTowardCamera)*.35;
+  // Smooth shoulder-depth signals so small tracking jitter does not cause a turn.
+  turnSmoothLeft=turnSmoothLeft*.70+rightTowardCamera*.30;
+  turnSmoothRight=turnSmoothRight*.70+leftTowardCamera*.30;
+  const signalLeft=turnSmoothLeft-Math.max(0,turnSmoothRight)*.30;
+  const signalRight=turnSmoothRight-Math.max(0,turnSmoothLeft)*.30;
   const candidate=signalLeft>TURN_THRESHOLD&&signalLeft>signalRight?"LEFT":signalRight>TURN_THRESHOLD&&signalRight>signalLeft?"RIGHT":"NONE";
-  rightShoulderState.textContent=rightTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
-  leftShoulderState.textContent=leftTowardCamera>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  rightShoulderState.textContent=turnSmoothLeft>TURN_THRESHOLD?"เข้าหา":"ปกติ";
+  leftShoulderState.textContent=turnSmoothRight>TURN_THRESHOLD?"เข้าหา":"ปกติ";
   if(candidate==="NONE"){
     if(turnStateValue!=="NONE"&&Math.max(signalLeft,signalRight)<TURN_RELEASE){
       turnStateValue="NONE";turnCandidate="NONE";turnCandidateFrames=0;
       turnState.textContent="ตรง";
-      if(performance.now()-lastStepTime>900){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+      if(performance.now()-lastStepTime>600){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
     }
     return;
   }
