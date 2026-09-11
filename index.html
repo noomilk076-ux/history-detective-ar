@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 3.0</title>
+<title>History Detective AR — Museum Prototype 3.2</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 3.0 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 3.2 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -109,12 +109,12 @@ let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null
 let wallRects=[];
 let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 
-const TURN_THRESHOLD=0.060;
-const TURN_RELEASE=0.012;
-const TURN_CONFIRM_FRAMES=8;
-const TURN_COOLDOWN=450;
-const TURN_NEUTRAL_HOLD_MS=250;
-const TURN_GESTURE_HOLD_MS=220;
+const TURN_THRESHOLD=0.055;
+const TURN_RELEASE=0.032;
+const TURN_CONFIRM_FRAMES=5;
+const TURN_COOLDOWN=300;
+const TURN_NEUTRAL_HOLD_MS=90;
+const TURN_GESTURE_HOLD_MS=110;
 const ARM_RAISE_THRESHOLD=0.15;
 const ARM_RELEASE_THRESHOLD=0.065;
 const ARM_STEP_COOLDOWN=650;
@@ -202,8 +202,9 @@ function moveForward(){
 }
 
 function updateWorldTurn(){
-  if(turnStateValue==="LEFT") targetYaw+=Math.PI/2;
-  else if(turnStateValue==="RIGHT") targetYaw-=Math.PI/2;
+  // Three.js: positive yaw turns the view to the right; negative yaw turns left.
+  if(turnStateValue==="LEFT") targetYaw-=Math.PI/2;
+  else if(turnStateValue==="RIGHT") targetYaw+=Math.PI/2;
   targetYaw=((targetYaw+Math.PI)%(Math.PI*2))-Math.PI;
 }
 
@@ -456,7 +457,7 @@ function processPose(result){
 }
 
 function detectWalking(data){
-  if(turnCandidate!=="NONE"||turnStateValue!=="NONE")return;
+  if(turnStateValue!=="NONE")return;
   if(data.leftWristY==null||data.rightWristY==null||data.leftShoulderY==null||data.rightShoulderY==null||!calibrationData)return;
 
   // ครึ่งตัว: ใช้ตำแหน่งข้อมือเทียบไหล่ แต่ใช้ hysteresis + smoothing + neutral gate
@@ -579,18 +580,27 @@ function detectTurning(data){
   // ถ้ากลับมาตรงจริง ๆ ต้องนิ่งต่ำกว่า release ต่อเนื่องก่อนปลดล็อก
   const released=Math.max(Math.abs(turnSmoothLeft),Math.abs(turnSmoothRight))<TURN_RELEASE;
   if(turnStateValue!=="NONE"){
-    if(released && now-lastTurnChange>=TURN_COOLDOWN && now-turnNeutralSince>=TURN_NEUTRAL_HOLD_MS){
-      turnStateValue="NONE";
-      turnCandidate="NONE";
-      turnCandidateFrames=0;
-      turnGestureSince=0;
-      turnState.textContent="ตรง";
-      if(now-lastStepTime>700){movementIcon.textContent="🧍";movementText.textContent="พร้อม";status.textContent="พร้อม — ยกแขนทีละข้าง";}
+    // หลังเลี้ยวต้องกลับมาตรงก่อน จึงจะรับคำสั่งใหม่ แต่ไม่ล็อกเกมค้าง
+    if(released){
+      if(!turnNeutralSince)turnNeutralSince=now;
+      if(now-turnNeutralSince>=TURN_NEUTRAL_HOLD_MS){
+        turnStateValue="NONE";
+        turnCandidate="NONE";
+        turnCandidateFrames=0;
+        turnGestureSince=0;
+        turnState.textContent="ตรง";
+        movementIcon.textContent="🧍";
+        movementText.textContent="พร้อม";
+        status.textContent="พร้อม — เดินหรือเลี้ยวได้";
+      }
+    }else{
+      // ยังอยู่ในท่าเลี้ยว ให้รออย่างเดียว ห้ามสั่งเลี้ยวซ้ำ
+      turnNeutralSince=0;
     }
     return;
   }
 
-  if(!neutralLongEnough || now-lastStepTime<250){
+  if(!neutralLongEnough || now-lastStepTime<180){
     turnCandidate="NONE";
     turnCandidateFrames=0;
     turnGestureSince=0;
