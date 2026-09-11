@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 2.9</title>
+<title>History Detective AR — Museum Prototype 3.0</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 2.9 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 3.0 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -195,8 +195,8 @@ window.addEventListener("resize",resize3D);
 
 function moveForward(){
   const a=WALK_STEP_DISTANCE;
-  const nx=targetX+Math.sin(targetYaw)*a;
-  const nz=targetZ-Math.cos(targetYaw)*a;
+  const nx=targetX-Math.sin(targetYaw)*a;
+  const nz=targetZ+Math.cos(targetYaw)*a;
   if(nx<-13.2||nx>13.2||nz<-13.2||nz>13.2||blocked(nx,nz))return false;
   targetX=nx; targetZ=nz; return true;
 }
