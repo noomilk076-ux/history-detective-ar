@@ -112,8 +112,8 @@ let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 const TURN_THRESHOLD=0.060;
 const TURN_RELEASE=0.012;
 const TURN_CONFIRM_FRAMES=8;
-const TURN_COOLDOWN=1200;
-const TURN_NEUTRAL_HOLD_MS=650;
+const TURN_COOLDOWN=450;
+const TURN_NEUTRAL_HOLD_MS=250;
 const TURN_GESTURE_HOLD_MS=220;
 const ARM_RAISE_THRESHOLD=0.15;
 const ARM_RELEASE_THRESHOLD=0.065;
@@ -195,15 +195,15 @@ window.addEventListener("resize",resize3D);
 
 function moveForward(){
   const a=WALK_STEP_DISTANCE;
-  const nx=targetX-Math.sin(targetYaw)*a;
-  const nz=targetZ+Math.cos(targetYaw)*a;
+  const nx=targetX+Math.sin(targetYaw)*a;
+  const nz=targetZ-Math.cos(targetYaw)*a;
   if(nx<-13.2||nx>13.2||nz<-13.2||nz>13.2||blocked(nx,nz))return false;
   targetX=nx; targetZ=nz; return true;
 }
 
 function updateWorldTurn(){
-  if(turnStateValue==="LEFT") targetYaw-=Math.PI/2;
-  else if(turnStateValue==="RIGHT") targetYaw+=Math.PI/2;
+  if(turnStateValue==="LEFT") targetYaw+=Math.PI/2;
+  else if(turnStateValue==="RIGHT") targetYaw-=Math.PI/2;
   targetYaw=((targetYaw+Math.PI)%(Math.PI*2))-Math.PI;
 }
 
@@ -590,7 +590,7 @@ function detectTurning(data){
     return;
   }
 
-  if(!neutralLongEnough || now-lastStepTime<500){
+  if(!neutralLongEnough || now-lastStepTime<250){
     turnCandidate="NONE";
     turnCandidateFrames=0;
     turnGestureSince=0;
