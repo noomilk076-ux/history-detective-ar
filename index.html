@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>History Detective AR — Museum Prototype 2.8</title>
+<title>History Detective AR — Museum Prototype 2.9</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#07111f;color:#fff}
@@ -38,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,
 <video id="camera" autoplay playsinline muted></video>
 <canvas id="overlay"></canvas>
 <div id="pointer"></div>
-<div id="museumHint">🏛️ Prototype 2.8 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
+<div id="museumHint">🏛️ Prototype 2.9 • ห้องพิพิธภัณฑ์ 3D • เบาะแสสุ่ม 8 จุด</div>
 <div id="loading3d">🏛️ กำลังสร้างห้องพิพิธภัณฑ์ 3D...</div>
 <div id="topBar"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมเริ่มภารกิจ</div></div>
 <div id="movement"><div id="movementIcon">🧍</div><div id="movementText">รอเริ่มระบบ</div></div>
@@ -101,6 +101,7 @@ let lastWalkSide="";
 let neutralSince=0;
 let leftRaiseSmooth=null,rightRaiseSmooth=null;
 let turnCandidate="NONE",turnCandidateFrames=0,turnStateValue="NONE",lastTurnChange=0;
+let turnNeutralSince=0,turnGestureSince=0;
 let shoulderHistory=[];
 let walkHistory=[];
 let smoothPointerX=0,smoothPointerY=0;
@@ -108,16 +109,18 @@ let THREE=null,renderer=null,scene=null,camera3d=null,clock=null,museumRoot=null
 let wallRects=[];
 let cameraX=0,cameraZ=13,targetX=0,targetZ=13,cameraYaw=0,targetYaw=0;
 
-const TURN_THRESHOLD=0.045;
-const TURN_RELEASE=0.020;
-const TURN_CONFIRM_FRAMES=6;
-const TURN_COOLDOWN=900;
+const TURN_THRESHOLD=0.060;
+const TURN_RELEASE=0.012;
+const TURN_CONFIRM_FRAMES=8;
+const TURN_COOLDOWN=1200;
+const TURN_NEUTRAL_HOLD_MS=650;
+const TURN_GESTURE_HOLD_MS=220;
 const ARM_RAISE_THRESHOLD=0.15;
 const ARM_RELEASE_THRESHOLD=0.065;
 const ARM_STEP_COOLDOWN=650;
 const ARM_RAISE_HOLD_MS=150;
 const ARM_NEUTRAL_HOLD_MS=160;
-const WALK_STEP_DISTANCE=1.00;
+const WALK_STEP_DISTANCE=1.50;
 const POINTER_SMOOTHING=0.25;
 const THREE_URL="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
@@ -394,7 +397,7 @@ async function runCalibration(){
   };
   shoulderHistory=[];
   walkHistory=[];
-  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;leftRaiseSince=0;rightRaiseSince=0;neutralSince=0;lastWalkSide="";leftRaiseSmooth=null;rightRaiseSmooth=null;registerStep.lastSide="";
+  stepCount=0;lastStepTime=0;leftUp=false;rightUp=false;leftRaiseSince=0;rightRaiseSince=0;neutralSince=0;lastWalkSide="";leftRaiseSmooth=null;rightRaiseSmooth=null;registerStep.lastSide="";turnCandidate="NONE";turnCandidateFrames=0;turnStateValue="NONE";lastTurnChange=0;turnNeutralSince=0;turnGestureSince=0;
   stepCountElement.textContent="0";
   calibration.style.display="none";
 }
@@ -453,6 +456,7 @@ function processPose(result){
 }
 
 function detectWalking(data){
+  if(turnCandidate!=="NONE"||turnStateValue!=="NONE")return;
   if(data.leftWristY==null||data.rightWristY==null||data.leftShoulderY==null||data.rightShoulderY==null||!calibrationData)return;
 
   // ครึ่งตัว: ใช้ตำแหน่งข้อมือเทียบไหล่ แต่ใช้ hysteresis + smoothing + neutral gate
@@ -538,36 +542,94 @@ function registerStep(side){
 let turnSmoothLeft=0,turnSmoothRight=0;
 function detectTurning(data){
   if(!calibrationData)return;
+
+  const now=performance.now();
   const rightDelta=data.rightShoulderZ-calibrationData.rightShoulderZ;
   const leftDelta=data.leftShoulderZ-calibrationData.leftShoulderZ;
   const rightTowardCamera=-rightDelta;
   const leftTowardCamera=-leftDelta;
-  // Smooth shoulder-depth signals so small tracking jitter does not cause a turn.
-  turnSmoothLeft=turnSmoothLeft*.70+rightTowardCamera*.30;
-  turnSmoothRight=turnSmoothRight*.70+leftTowardCamera*.30;
-  const signalLeft=turnSmoothLeft-Math.max(0,turnSmoothRight)*.30;
-  const signalRight=turnSmoothRight-Math.max(0,turnSmoothLeft)*.30;
+
+  // กรองสัญญาณไหล่ให้หนักขึ้น และดู “ไหล่ข้างเดียว” เป็นหลัก
+  turnSmoothLeft=turnSmoothLeft*.82+rightTowardCamera*.18;
+  turnSmoothRight=turnSmoothRight*.82+leftTowardCamera*.18;
+
+  // การเดินด้วยแขนจะไม่สามารถแทรกเข้ามาเป็นคำสั่งเลี้ยวได้
+  const leftRaise=leftRaiseSmooth??0;
+  const rightRaise=rightRaiseSmooth??0;
+  const armsNeutral=leftRaise<ARM_RELEASE_THRESHOLD&&rightRaise<ARM_RELEASE_THRESHOLD;
+
+  if(!armsNeutral){
+    turnCandidate="NONE";
+    turnCandidateFrames=0;
+    turnGestureSince=0;
+    turnNeutralSince=0;
+    return;
+  }
+
+  if(!turnNeutralSince)turnNeutralSince=now;
+  const neutralLongEnough=now-turnNeutralSince>=TURN_NEUTRAL_HOLD_MS;
+
+  const signalLeft=turnSmoothLeft-Math.max(0,turnSmoothRight)*.18;
+  const signalRight=turnSmoothRight-Math.max(0,turnSmoothLeft)*.18;
   const candidate=signalLeft>TURN_THRESHOLD&&signalLeft>signalRight?"LEFT":signalRight>TURN_THRESHOLD&&signalRight>signalLeft?"RIGHT":"NONE";
+
   rightShoulderState.textContent=turnSmoothLeft>TURN_THRESHOLD?"เข้าหา":"ปกติ";
   leftShoulderState.textContent=turnSmoothRight>TURN_THRESHOLD?"เข้าหา":"ปกติ";
-  if(candidate==="NONE"){
-    // ปล่อยท่าเลี้ยวก่อน จึงจะอนุญาตให้รับคำสั่งเลี้ยวครั้งใหม่
-    if(turnStateValue!=="NONE"&&Math.max(signalLeft,signalRight)<TURN_RELEASE){
-      turnStateValue="NONE";turnCandidate="NONE";turnCandidateFrames=0;
+
+  // ถ้ากลับมาตรงจริง ๆ ต้องนิ่งต่ำกว่า release ต่อเนื่องก่อนปลดล็อก
+  const released=Math.max(Math.abs(turnSmoothLeft),Math.abs(turnSmoothRight))<TURN_RELEASE;
+  if(turnStateValue!=="NONE"){
+    if(released && now-lastTurnChange>=TURN_COOLDOWN && now-turnNeutralSince>=TURN_NEUTRAL_HOLD_MS){
+      turnStateValue="NONE";
+      turnCandidate="NONE";
+      turnCandidateFrames=0;
+      turnGestureSince=0;
       turnState.textContent="ตรง";
-      if(performance.now()-lastStepTime>600){movementIcon.textContent="🧍";movementText.textContent="ตรง"}
+      if(now-lastStepTime>700){movementIcon.textContent="🧍";movementText.textContent="พร้อม";status.textContent="พร้อม — ยกแขนทีละข้าง";}
     }
     return;
   }
-  // สำคัญ: หลังสั่งเลี้ยวแล้ว ห้ามสั่งเลี้ยวซ้ำจนกว่าผู้เล่นจะกลับมาตรง
-  if(turnStateValue!=="NONE") return;
-  if(candidate===turnCandidate)turnCandidateFrames++;else{turnCandidate=candidate;turnCandidateFrames=1}
-  if(turnCandidateFrames>=TURN_CONFIRM_FRAMES&&performance.now()-lastTurnChange>TURN_COOLDOWN){
-    turnStateValue=candidate;lastTurnChange=performance.now();
+
+  if(!neutralLongEnough || now-lastStepTime<500){
+    turnCandidate="NONE";
+    turnCandidateFrames=0;
+    turnGestureSince=0;
+    return;
+  }
+
+  if(candidate==="NONE"){
+    turnCandidate="NONE";
+    turnCandidateFrames=0;
+    turnGestureSince=0;
+    return;
+  }
+
+  if(candidate!==turnCandidate){
+    turnCandidate=candidate;
+    turnCandidateFrames=1;
+    turnGestureSince=now;
+    return;
+  }
+
+  turnCandidateFrames++;
+  if(turnCandidateFrames>=TURN_CONFIRM_FRAMES && now-turnGestureSince>=TURN_GESTURE_HOLD_MS && now-lastTurnChange>=TURN_COOLDOWN){
+    turnStateValue=candidate;
+    lastTurnChange=now;
+    turnCandidateFrames=0;
+    turnGestureSince=0;
+    turnNeutralSince=0;
+    updateWorldTurn();
+
     if(candidate==="LEFT"){
-      turnState.textContent="↩️ ซ้าย";movementIcon.textContent="↩️";movementText.textContent="เลี้ยวซ้าย";status.textContent="↩️ เลี้ยวซ้าย"; updateWorldTurn();
+      turnState.textContent="↩️ ซ้าย";
+      movementIcon.textContent="↩️";
+      movementText.textContent="เลี้ยวซ้าย 90°";
+      status.textContent="↩️ เลี้ยวซ้าย — กลับมาตรงเพื่อเลี้ยวครั้งต่อไป";
     }else{
-      turnState.textContent="ขวา ↪️";movementIcon.textContent="↪️";movementText.textContent="เลี้ยวขวา";status.textContent="↪️ เลี้ยวขวา"; updateWorldTurn();
+      turnState.textContent="ขวา ↪️";
+      movementIcon.textContent="↪️";
+      movementText.textContent="เลี้ยวขวา 90°";
+      status.textContent="↪️ เลี้ยวขวา — กลับมาตรงเพื่อเลี้ยวครั้งต่อไป";
     }
   }
 }
