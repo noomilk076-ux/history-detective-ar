@@ -258,5 +258,55 @@ function isWalkable(x,z){
 }
 
 
-buildMuseum();playerModel=buildPlayer();playerModel.position.copy(playerPos);playerModel.rotation.y=cameraYaw;camera.position.set(0,6.2,40.5);camera.lookAt(0,2.0,10.0);loading.classList.add('hidden');start.classList.remove('hidden');animate();
+function updateGame(dt){
+  if(gameStarted && !working && clueModal.style.display!=='flex' && toolChoice.style.display!=='flex' && thinkModal.classList.contains('hidden') && boardModal.classList.contains('hidden') && finalModal.classList.contains('hidden') && revealModal.classList.contains('hidden') && heldDir){
+    let dx=0,dz=0;
+    const forwardX=-Math.sin(viewYaw), forwardZ=-Math.cos(viewYaw);
+    const rightX=Math.cos(viewYaw), rightZ=-Math.sin(viewYaw);
+    if(heldDir==='up'){dx=forwardX;dz=forwardZ}
+    else if(heldDir==='down'){dx=-forwardX;dz=-forwardZ}
+    else if(heldDir==='left'){dx=-rightX;dz=-rightZ}
+    else if(heldDir==='right'){dx=rightX;dz=rightZ}
+    const len=Math.hypot(dx,dz)||1; const step=MOVE_SPEED*dt;
+    const nx=playerPos.x+(dx/len)*step, nz=playerPos.z+(dz/len)*step;
+    if(isWalkable(nx,nz)){
+      playerPos.x=nx; playerPos.z=nz;
+      if(playerModel){playerModel.position.x=playerPos.x;playerModel.position.z=playerPos.z;playerModel.rotation.y=Math.atan2(-dx,-dz)}
+    }
+  }
+  // กล้องหมุนรอบตัวละคร แต่การหมุนกล้องไม่หมุนตัวละคร
+  const cp=Math.cos(viewPitch), sp=Math.sin(viewPitch);
+  const horizontal=CAMERA_RADIUS*cp;
+  camera.position.set(playerPos.x+Math.sin(viewYaw)*horizontal, playerPos.y+CAMERA_HEIGHT+CAMERA_RADIUS*sp, playerPos.z+Math.cos(viewYaw)*horizontal);
+  camera.lookAt(playerPos.x,playerPos.y+1.45,playerPos.z);
+  // ตรวจว่าอยู่ใกล้เบาะแสใดที่สุด
+  nearbyClue=null; let nearD=Infinity;
+  for(const o of clueObjects){
+    if(!o.visible || found.has(o.userData.clue)) continue;
+    const d=Math.hypot(playerPos.x-o.position.x,playerPos.z-o.position.z);
+    if(d<nearD){nearD=d;nearbyClue=o}
+  }
+  const near=!!nearbyClue && nearD<=CLUE_USE_DISTANCE;
+  centerBtn.classList.toggle('ready',near);
+  centerBtn.setAttribute('aria-label',near?'ใช้เครื่องมือกับเบาะแส':'เดินเข้าใกล้เบาะแสเพื่อใช้เครื่องมือ');
+  // ทำให้เบาะแสใกล้ตัวเด่นขึ้นเล็กน้อย
+  clueObjects.forEach(o=>{
+    const active=o===nearbyClue && near;
+    const ring=o.children.find(c=>c.geometry && c.geometry.type==='TorusGeometry');
+    if(ring) ring.material.emissiveIntensity=active?3.2:1.5;
+  });
+}
+function animate(){requestAnimationFrame(animate); const now=performance.now(); const dt=Math.min((now-(animate.last||now))/1000,.05); animate.last=now; updateGame(dt); renderer.render(scene,camera)}
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
+
+buildMuseum();
+playerModel=buildPlayer();
+playerModel.position.copy(playerPos);
+playerModel.rotation.y=0;
+// เริ่มจากในอาคารจริง ไม่ใช่นอกกำแพง
+camera.position.set(playerPos.x,playerPos.y+CAMERA_HEIGHT,playerPos.z+CAMERA_RADIUS);
+camera.lookAt(playerPos.x,playerPos.y+1.45,playerPos.z);
+loading.classList.add('hidden');
+start.classList.remove('hidden');
+animate();
 </script></body></html>
