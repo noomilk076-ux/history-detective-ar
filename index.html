@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>History Detective — Prototype 6.0 — Evidence-Based Learning Museum</title>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>History Detective — Prototype 6.9 — Evidence-Based Learning Museum</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111f;font-family:system-ui,-apple-system,sans-serif;color:#fff}#app{position:relative;width:100%;height:100%}#world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}#top{position:absolute;left:0;right:0;top:0;padding:12px 16px 18px;background:linear-gradient(rgba(4,10,18,.86),transparent);z-index:10;pointer-events:none}#title{font-size:clamp(21px,4vw,34px);font-weight:950}#status{font-size:clamp(13px,2.7vw,19px);margin-top:3px}.pill{position:absolute;right:14px;top:14px;z-index:12;background:rgba(15,25,40,.84);padding:9px 13px;border-radius:18px;font-weight:900;box-shadow:0 8px 25px #0005}.hint{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,20,35,.82);padding:9px 15px;border-radius:18px;font-size:14px;font-weight:800;white-space:nowrap;pointer-events:none}.screen{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at center,#23476aee,#030811fa)}.card{width:min(700px,94vw);background:#fff;color:#172033;border-radius:28px;padding:28px;box-shadow:0 25px 90px #0008}.card h1{font-size:clamp(30px,8vw,58px);margin:0 0 10px}.card p{font-size:clamp(16px,3.2vw,22px);line-height:1.55}.btn{border:0;border-radius:16px;padding:14px 22px;font-size:18px;font-weight:950;background:#ffd166;color:#241900;margin-top:12px}.hidden{display:none!important}.thinkGrid{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}.thinkPick{border:3px solid #d9e0e8;border-radius:18px;background:#f7f9fb;color:#182235;padding:15px;font-size:18px;font-weight:950;text-align:left}.thinkPick.selected{border-color:#7c5cff;background:#eeeaff;box-shadow:0 0 22px #8b5cf655}.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}.chain span{padding:9px 11px;border-radius:14px;background:#f1f4f7;color:#243047;font-weight:900}.chain b{color:#8b6b2b}.thinkQuestion{padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#fff7dc,#f3e7c8);border:2px solid #e4c76e;color:#4b3922;font-weight:900;line-height:1.55}#clueModal{position:absolute;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;background:#030811cc;backdrop-filter:blur(7px)}#clueBox{width:min(760px,94vw);max-height:88vh;overflow:auto;background:#fff;color:#172033;border-radius:26px;padding:25px;box-shadow:0 25px 90px #000a}#clueTitle{font-size:clamp(25px,6vw,42px);margin:5px 0 12px}#clueText{font-size:clamp(17px,3.4vw,23px);line-height:1.65}.tools{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.tool{flex:1 1 130px;min-height:92px;border:3px solid #dbe4ef;background:#f5f8fb;border-radius:18px;font-size:18px;font-weight:900;color:#182235}.tool.selected{border-color:#ffbf3c;background:#fff2c7;box-shadow:0 0 25px #ffd16688}.tool.wrong{animation:shake .3s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}#bag{position:absolute;right:14px;bottom:62px;z-index:12;background:#16243aee;border:2px solid #ffffff33;border-radius:18px;padding:10px 13px;font-weight:900;max-width:260px}#bag small{display:block;color:#b9c8da;margin-top:3px;font-weight:700}@media(max-width:700px){.hint{font-size:12px;max-width:92vw;overflow:hidden;text-overflow:ellipsis}.pill{font-size:13px}}
 #movePad{position:absolute;left:18px;bottom:70px;z-index:25;width:180px;height:180px;display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px 60px;gap:0;touch-action:none;user-select:none}#movePad button,#actionBtn{border:2px solid rgba(255,255,255,.35);background:rgba(20,35,55,.88);color:#fff;font-weight:950;box-shadow:0 8px 24px #0007;touch-action:none;user-select:none;-webkit-user-select:none}#movePad button{font-size:28px;width:60px;height:60px}#movePad button:active{background:#b87a28;transform:scale(.96)}#up{grid-column:2;grid-row:1;border-radius:18px 18px 8px 8px}#left{grid-column:1;grid-row:2;border-radius:18px 8px 8px 18px}#center{grid-column:2;grid-row:2;border-radius:50%;font-size:24px!important;background:rgba(75,55,30,.94)!important}#center.ready{background:#b87a28!important;animation:pulse 1.15s infinite}#center:not(.ready){filter:none;box-shadow:0 8px 24px #0007!important}@keyframes pulse{50%{transform:scale(1.07)}}#right{grid-column:3;grid-row:2;border-radius:8px 18px 18px 8px}#down{grid-column:2;grid-row:3;border-radius:8px 8px 18px 18px}@media(max-width:700px){#movePad{left:12px;bottom:62px;transform:scale(.86);transform-origin:bottom left}.hint{bottom:12px;max-width:88vw}} #toolChoice{display:none;position:absolute;inset:0;z-index:75;align-items:center;justify-content:center;padding:18px;background:#030811bb;backdrop-filter:blur(6px)}#toolChoice .card{max-height:88vh;overflow:auto}#toolChoiceTitle{font-size:clamp(25px,6vw,42px);margin:0 0 8px}.toolGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.toolPick{min-height:96px;border:3px solid #dbe4ef;background:#f5f8fb;border-radius:18px;font-size:17px;font-weight:950;color:#182235}.toolPick:active{transform:scale(.97)}.toolPick::first-line{font-size:20px}.toolPick.ready{border-color:#d5a63a;box-shadow:0 0 18px #ffd16655}.toolPick.selected{border-color:#ffbf3c;background:#fff2c7;box-shadow:0 0 25px #ffd16688}.actionNote{min-height:30px;margin-top:12px;font-weight:900}.evidenceList{display:grid;gap:10px;margin:16px 0}.evidenceItem{padding:13px 15px;border-radius:14px;background:#f2f5f8;font-weight:800;color:#243047}.candidateGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.supportGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}.supportPick{border:3px solid #d9e0e8;border-radius:16px;background:#f7f9fb;color:#182235;text-align:left;padding:12px;font-weight:850;line-height:1.4}.supportPick.selected{border-color:#55a86b;background:#eaf8ee;box-shadow:0 0 18px #6fcf9755}.supportPick .tag{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#e9eef5;font-size:12px}.supportCount{padding:12px 14px;border-radius:14px;background:#eef4ff;border:2px solid #bfd4ff;color:#20385f;font-weight:950}.reasonPrompt{padding:13px 15px;border-radius:16px;background:linear-gradient(135deg,#fff7dc,#f1e4c6);border:2px solid #e4c76e;color:#4b3922;font-weight:900;line-height:1.5}.reasonChoices{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.reasonChoice{border:2px solid #d9e0e8;border-radius:999px;padding:8px 12px;background:#fff;color:#243047;font-weight:850}.reasonChoice.selected{border-color:#8b5cf6;background:#f0eaff}.candidate{min-height:120px;border:3px solid #d9e0e8;border-radius:18px;background:#f7f9fb;color:#182235;font-size:18px;font-weight:950;padding:12px}.candidate.selected{border-color:#e3a72e;background:#fff1bf;box-shadow:0 0 22px #ffd16688}.reveal{background:#8b5cf6!important;color:#fff!important}.revealScene{position:relative;min-height:280px;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#fff7bf 0,#8e6d43 18%,#3b2b20 45%,#10141d 100%);display:flex;align-items:center;justify-content:center;margin:12px 0}.potReveal{font-size:110px;filter:drop-shadow(0 0 25px #ffd166);animation:potIn .9s ease-out both}.beam{position:absolute;top:-30px;width:190px;height:330px;background:linear-gradient(180deg,#fff8c8aa,#ffd16622,transparent);clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);animation:beam 1.8s infinite alternate}.infoPanels{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}.infoPanel{padding:12px;background:#f7f0df;border-radius:14px;color:#382b1e}.infoPanel b{display:block;color:#8b5e2f;margin-bottom:4px}@keyframes potIn{from{transform:translateY(45px) scale(.55);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}@keyframes beam{from{opacity:.35;transform:scaleX(.85)}to{opacity:.8;transform:scaleX(1.08)}}@media(max-width:700px){.toolGrid,.candidateGrid,.infoPanels{grid-template-columns:1fr 1fr}.candidate{font-size:15px;min-height:105px}}#phaseBar{position:absolute;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background:rgba(15,25,38,.82);backdrop-filter:blur(7px);color:#fff;font-weight:900;font-size:13px;box-shadow:0 6px 20px #0005;white-space:nowrap}.phase{opacity:.48}.phase.active{opacity:1;color:#ffd166;text-shadow:0 0 10px #ffd166}.phase.done{opacity:.9;color:#9fe3b1}@media(max-width:700px){#phaseBar{top:68px;font-size:11px;gap:4px;padding:6px 9px}}.learnNote{margin:10px 0;padding:11px 13px;border-left:5px solid #d5a63a;background:#fff8df;border-radius:10px;color:#3b3020;font-weight:800;line-height:1.5}.reasonBox{margin-top:12px;padding:12px;border:2px dashed #d5a63a;border-radius:14px;background:#fffaf0;color:#4a3a28;font-weight:800}.boardStep{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#f4f6f8;margin:7px 0;color:#243047}.boardStep b{color:#9a6b20;min-width:26px}
@@ -31,7 +31,7 @@ const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three
 let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog=new THREE.Fog(0x9ec4d8,28,58);
 let camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
 scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
-const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,13),cameraYaw=0;let selectedClue=null,selectedTool=null,armedTool=null,working=false;const found=new Set();let candidateSelected=null;const supportSelected=new Set();const reasonSelected=new Set();const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
+const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,25),cameraYaw=0;let selectedClue=null,selectedTool=null,armedTool=null,working=false;const found=new Set();let candidateSelected=null;const supportSelected=new Set();const reasonSelected=new Set();const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
 let heldDir=null;const MOVE_SPEED=3.8;const WORLD_LIMIT=15.5;
 let viewYaw=0, viewPitch=0.28; let cameraDragging=false, cameraMoved=false, cameraStartX=0, cameraStartY=0, cameraLastX=0, cameraLastY=0;
 const CAMERA_RADIUS=9.0, CAMERA_HEIGHT=5.2, CAMERA_SENS=0.008, CAMERA_PITCH_SENS=0.005, CAMERA_MIN_PITCH=-0.05, CAMERA_MAX_PITCH=0.78; const CLUE_USE_DISTANCE=2.4;
@@ -72,7 +72,7 @@ function addBackpack(g){
   badge.rotation.z=.25;
 }
 function buildMuseum(){
-  // GRAND MUSEUM 6.5 — โถงกลางเป็นพระเอก ห้องต่าง ๆ อยู่ด้านข้าง/ด้านหลัง
+  // GRAND MUSEUM 6.8 — โถงกลางเป็นพระเอก ห้องต่าง ๆ อยู่ด้านข้าง/ด้านหลัง
   const B=72;
   box(B,.3,B,0xd8c7aa,0,-.15,0);
   box(B,10,.5,0xeee2cf,0,5,-36); box(.5,10,B,0xeee2cf,-36,5,0); box(.5,10,B,0xeee2cf,36,5,0); box(B,10,.5,0xeee2cf,0,5,36);
@@ -84,7 +84,7 @@ function buildMuseum(){
   // หลังคา/ช่องแสงเหนือโถง
   for(let x=-25;x<=25;x+=5) box(.22,4.0,.22,0xb58c62,x,7.1,-2); box(54,.18,.22,0xb58c62,0,9.1,-2);
   // โถงกลางเปิดโล่ง
-  box(32,.12,48,0xe5d4ae,0,.08,4);
+  box(38,.12,52,0xe5d4ae,0,.08,4);
   cyl(13,.28,0xe7d3a9,0,.18,8); cyl(11.2,.16,0x5c7890,0,.34,8); cyl(9.6,.12,0xe9c86f,0,.44,8);
   // ตู้ปริศนา: อยู่ด้านหน้าและเป็น landmark หลักที่เห็นจากจุดเริ่ม
   box(11,.5,7.5,0x9a704c,0,.55,7); box(9.5,.4,6.2,0xb58c62,0,1.0,7);
@@ -92,13 +92,14 @@ function buildMuseum(){
   box(4.2,3.1,4.2,0x4d3a2b,0,2.15,7);
   label('🏛️ พิพิธภัณฑ์หลักฐานแห่งอดีต',new THREE.Vector3(0,9.0,18.0),5.0);
   label('🔒 วัตถุปริศนา • เก็บเบาะแสให้ครบ 8 ชิ้น',new THREE.Vector3(0,6.6,7),3.2);
+  label('🚪 เลือกสำรวจห้องด้านข้างและด้านหลัง',new THREE.Vector3(0,4.8,20),2.8);
   label('🏺 วัตถุปริศนา',new THREE.Vector3(0,1.8,13.9),2.7);
   const banner=(x,c,text)=>{box(1.5,4.8,.14,c,x,5.2,19);box(1.75,.2,.16,0xb58c62,x,7.55,19);label(text,new THREE.Vector3(x,5.2,18.83),1.65)};
   banner(-9,0xa64242,'อดีต\nส่องทาง'); banner(9,0x2867a8,'หลักฐาน\nเล่าเรื่อง');
   // ห้องปีกซ้าย/ขวา และห้องด้านหลัง
   function wingRoom(x,z,w,d,c,name,side,accent){
     box(w,.25,d,c,x,-.1,z);
-    const L=x-w/2,R=x+w/2,T=z-d/2,B=z+d/2,wallC=0xf6ecdd,trim=0xb58c62,door=6.5;
+    const L=x-w/2,R=x+w/2,T=z-d/2,B=z+d/2,wallC=0xf6ecdd,trim=0xb58c62,door=9.0;
     if(side==='east'){
       box(.3,6,d,wallC,L,3,z); box(w,6,.3,wallC,x,3,T); box(w,6,.3,wallC,x,3,B);
       // ผนังขวาแบ่งสองช่วง เว้นช่องประตูตรงกลาง
@@ -114,13 +115,13 @@ function buildMuseum(){
       box(.34,6,.34,trim,L,3,z-door/2); box(.34,6,.34,trim,L,3,z+door/2); box(.35,6,.35,accent,L-.15,3,z-door/2); box(.35,6,.35,accent,L-.15,3,z+door/2);
       label('🚪 '+name,new THREE.Vector3(L-.7,4.2,z),2.0);
     } else {
-      // ห้องด้านหลัง: เปิดประตูด้านเหนือ (ขอบ T) ให้หันเข้าหาโถงกลาง
-      box(.3,6,d,wallC,L,3,z); box(.3,6,d,wallC,R,3,z); box(w,6,.3,wallC,x,3,B);
+      // ห้องด้านหลัง: ทางเข้าอยู่ที่ผนังด้านใต้ (ขอบ B) ซึ่งหันเข้าหาโถงกลาง
+      box(.3,6,d,wallC,L,3,z); box(.3,6,d,wallC,R,3,z); box(w,6,.3,wallC,x,3,T);
       // ผนังด้านโถงแบ่งสองช่วง เว้นช่องประตูตรงกลาง
       const seg=(w-door)/2;
-      box(seg,6,.3,wallC,x-(door+seg)/2,3,T); box(seg,6,.3,wallC,x+(door+seg)/2,3,T);
-      box(.34,6,.34,trim,x-door/2,3,T); box(.34,6,.34,trim,x+door/2,3,T); box(.35,6,.35,accent,x-door/2,3,T-.15); box(.35,6,.35,accent,x+door/2,3,T-.15);
-      label('🚪 '+name,new THREE.Vector3(x,4.2,T-.7),2.0);
+      box(seg,6,.3,wallC,x-(door+seg)/2,3,B); box(seg,6,.3,wallC,x+(door+seg)/2,3,B);
+      box(.34,6,.34,trim,x-door/2,3,B); box(.34,6,.34,trim,x+door/2,3,B); box(.35,6,.35,accent,x-door/2,3,B+.15); box(.35,6,.35,accent,x+door/2,3,B+.15);
+      label('🚪 '+name,new THREE.Vector3(x,4.2,B+.7),2.0);
     }
   }
   wingRoom(-27,15,17,18,0xe6c08f,'ห้องขุดค้น','east',0xd98b42);
@@ -133,6 +134,23 @@ function buildMuseum(){
   box(4.5,.08,16,0xd5bd94,-18.5,.08,15); box(4.5,.08,16,0xd5bd94,18.5,.08,15);
   box(4.5,.08,16,0xd5bd94,-18.5,.08,-7); box(4.5,.08,16,0xd5bd94,18.5,.08,-7);
   box(4.5,.08,16,0xd5bd94,-9,.08,-28); box(4.5,.08,16,0xd5bd94,10,.08,-28);
+  // ประตูทางเข้าห้องแบบเปิดจริง: ไม่มีแผ่นผนังปิดช่องประตู และมีซุ้มเป็นตัวนำสายตา
+  function entranceArch(x,z,rot=0,accent=0xffd166){
+    const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot; root.add(g);
+    box(.55,5.2,.55,0xb58c62,-4.4,2.6,0,g); box(.55,5.2,.55,0xb58c62,4.4,2.6,0,g);
+    box(9.35,.55,.55,0xb58c62,0,5.15,0,g);
+    box(8.2,.16,.18,accent,0,4.85,-.35,g);
+  }
+  entranceArch(-18.5,15,Math.PI/2,0xd98b42);
+  entranceArch(18.5,15,-Math.PI/2,0x67a86e);
+  entranceArch(-18.5,-7,Math.PI/2,0x3d87c7);
+  entranceArch(18.5,-7,-Math.PI/2,0x6b6be8);
+  entranceArch(-9,-20.8,0,0xc86b3c);
+  entranceArch(10,-20.8,0,0x7656c8);
+  label('⬅️ ทางเข้า • ห้องขุดค้น',new THREE.Vector3(-18.5,5.8,15),2.0);
+  label('➡️ ทางเข้า • ห้องหลักฐาน',new THREE.Vector3(18.5,5.8,15),2.0);
+  label('⬅️ ทางเข้า • ห้องแผนที่',new THREE.Vector3(-18.5,5.8,-7),2.0);
+  label('➡️ ทางเข้า • ห้องวิเคราะห์',new THREE.Vector3(18.5,5.8,-7),2.0);
   // landmark ใหญ่ของแต่ละห้อง
   box(8,.7,7.5,0x8b6748,-27,.35,15); box(7,.3,6,0x65452e,-27,.9,15); box(5.6,.25,4.5,0x9c6d42,-27,1.2,15); for(let i=0;i<6;i++)box(.9,.75,.9,0x9b7654,-29.5+i,2.0,14.8+(i%2)*.7); label('⛏️ หลุมขุดค้นขนาดใหญ่',new THREE.Vector3(-27,4.8,15),2.7);
   box(8,.3,5,0x4f86a8,-27,.2,-7); box(7.2,.18,4.2,0x6da4be,-27,.52,-7); for(let i=-3;i<=3;i++)cyl(.14,.45,0xffd166,-27+i,.8,-7); label('🗺️ แผนที่ประเทศไทย 3D',new THREE.Vector3(-27,4.7,-7),2.7);
@@ -150,7 +168,7 @@ function buildMuseum(){
   addClue(31,1.4,18,3,'🧩','เศษชิ้นส่วนปริศนา');
   addClue(23,1.4,-2,4,'🔥','ร่องรอยจากดินและไฟ');
   addClue(-9,1.4,-30,5,'🏺','รูปทรงที่ยังมองไม่ครบ');
-  addClue(1,1.4,-30,6,'3️⃣','สามส่วนที่ซ่อนอยู่');
+  addClue(4,1.4,-30,6,'3️⃣','สามส่วนที่ซ่อนอยู่');
   addClue(9,1.4,-25,7,'🏺','หลักฐานจากแหล่งโบราณคดี');
   addClue(17,1.4,-25,8,'📂','แฟ้มลับจากนักโบราณคดี');
 }
@@ -232,31 +250,40 @@ world.addEventListener('pointerup',e=>{
 });
 world.addEventListener('pointercancel',()=>{cameraDragging=false;cameraMoved=false;});
 movePad.addEventListener('pointerdown',e=>e.stopPropagation());
-function inRect(x,z,x1,x2,z1,z2,pad=.55){return x>=x1+pad&&x<=x2-pad&&z>=z1+pad&&z<=z2-pad}
+function inRect(x,z,x1,x2,z1,z2,pad=.0){return x>=x1+pad&&x<=x2-pad&&z>=z1+pad&&z<=z2-pad}
 function isWalkable(x,z){
+  // ผังการเดิน 6.9 ใช้พิกัดเดียวกับห้องและตำแหน่งประตูจริง
+  // ทุกห้องเชื่อมกับโถงผ่าน corridor ที่ทับกับช่องประตู จึงเดินเข้าและเดินกลับได้
   if(x<-35||x>35||z<-35||z>35)return false;
   // โถงกลาง
-  if(inRect(x,z,-16,16,-20,31,.55))return true;
-  // คอทางเข้าห้องด้านซ้าย/ขวา
-  if(inRect(x,z,-23,-15,7,23,.45))return true;
-  if(inRect(x,z,15,23,7,23,.45))return true;
-  if(inRect(x,z,-23,-15,-15,1,.45))return true;
-  if(inRect(x,z,15,23,-15,1,.45))return true;
-  // ห้องซ้าย
-  if(inRect(x,z,-35,-19,6,24,.55))return true;
-  if(inRect(x,z,-35,-19,-16,2,.55))return true;
-  // ห้องขวา
-  if(inRect(x,z,19,35,6,24,.55))return true;
-  if(inRect(x,z,19,35,-16,2,.55))return true;
-  // คอทางเข้าห้องด้านหลัง
-  if(inRect(x,z,-17,-1,-35,-19.5,.45))return true;
-  if(inRect(x,z,1,18,-35,-19.5,.45))return true;
-  // ห้องด้านหลัง
-  if(inRect(x,z,-17,-1,-35,-21,.55))return true;
-  if(inRect(x,z,1,18,-35,-21,.55))return true;
+  if(inRect(x,z,-19,19,-22,31,.55))return true;
+
+  // ปีกซ้ายบน: ห้องขุดค้น — ประตูที่ x=-18.5
+  if(inRect(x,z,-23.5,-18.0,5,25,.25))return true;
+  if(inRect(x,z,-34.5,-18.0,6,24,.55))return true;
+
+  // ปีกซ้ายล่าง: ห้องแผนที่ — ประตูที่ x=-18.5
+  if(inRect(x,z,-23.5,-18.0,-17,3,.25))return true;
+  if(inRect(x,z,-34.5,-18.0,-16,2,.55))return true;
+
+  // ปีกขวาบน: ห้องหลักฐาน — ประตูที่ x=18.5
+  if(inRect(x,z,18.0,23.5,5,25,.25))return true;
+  if(inRect(x,z,18.0,34.5,6,24,.55))return true;
+
+  // ปีกขวาล่าง: ห้องวิเคราะห์ — ประตูที่ x=18.5
+  if(inRect(x,z,18.0,23.5,-17,3,.25))return true;
+  if(inRect(x,z,18.0,34.5,-16,2,.55))return true;
+
+  // ห้องเครื่องปั้นด้านหลังซ้าย — ประตูอยู่ผนังด้านใต้ z=-21
+  if(inRect(x,z,-17.5,0.0,-22.5,-19.5,.25))return true;
+  if(inRect(x,z,-16.5,-1.5,-34.5,-20.5,.55))return true;
+
+  // ห้องนักสืบด้านหลังขวา — ประตูอยู่ผนังด้านใต้ z=-21
+  if(inRect(x,z,0.0,18.5,-22.5,-19.5,.25))return true;
+  if(inRect(x,z,1.5,17.5,-34.5,-20.5,.55))return true;
+
   return false;
 }
-
 
 function updateGame(dt){
   if(gameStarted && !working && clueModal.style.display!=='flex' && toolChoice.style.display!=='flex' && thinkModal.classList.contains('hidden') && boardModal.classList.contains('hidden') && finalModal.classList.contains('hidden') && revealModal.classList.contains('hidden') && heldDir){
