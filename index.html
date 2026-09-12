@@ -16,7 +16,7 @@ const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three
 let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog=new THREE.Fog(0x9ec4d8,28,58);
 let camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
 scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
-const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,13),cameraYaw=Math.PI;let selectedClue=null,selectedTool=null,armedTool=null,working=false;const found=new Set();let candidateSelected=null;const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
+const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,13),cameraYaw=0;let selectedClue=null,selectedTool=null,armedTool=null,working=false;const found=new Set();let candidateSelected=null;const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
 let heldDir=null;const MOVE_SPEED=3.8;const WORLD_LIMIT=15.5;
 let viewYaw=0, viewPitch=0.28; let cameraDragging=false, cameraMoved=false, cameraStartX=0, cameraStartY=0, cameraLastX=0, cameraLastY=0;
 const CAMERA_RADIUS=6.2, CAMERA_HEIGHT=4.0, CAMERA_SENS=0.008, CAMERA_PITCH_SENS=0.005, CAMERA_MIN_PITCH=-0.05, CAMERA_MAX_PITCH=0.78;
@@ -198,22 +198,22 @@ teacherRevealBtn.onclick=()=>{finalModal.classList.add('hidden');revealModal.cla
 finishBtn.onclick=()=>{revealModal.classList.add('hidden');status.textContent='🏆 ภารกิจนักสืบประวัติศาสตร์สำเร็จ!';};
 function animate(){requestAnimationFrame(animate);let now=performance.now();let dt=Math.min(.05,(now-(animate.last||now))/1000);animate.last=now;
  if(gameStarted&&clueModal.style.display!=='flex'&&heldDir){
-   // ควบคุมแบบ 4 ทิศทางคงที่: ▲=เหนือ/เข้าพิพิธภัณฑ์, ▼=กลับทางเดิม, ◀/▶=ซ้าย/ขวา
+   // Camera-relative movement: เดินสัมพันธ์กับมุมกล้อง
    const step=MOVE_SPEED*dt;
+   const forwardX=Math.sin(viewYaw), forwardZ=-Math.cos(viewYaw);
+   const rightX=Math.cos(viewYaw), rightZ=Math.sin(viewYaw);
    let dx=0,dz=0;
-   if(heldDir==='up')dz=-step;
-   if(heldDir==='down')dz=step;
-   if(heldDir==='left')dx=-step;
-   if(heldDir==='right')dx=step;
+   if(heldDir==='up'){dx=forwardX*step;dz=forwardZ*step;}
+   else if(heldDir==='down'){dx=-forwardX*step;dz=-forwardZ*step;}
+   else if(heldDir==='left'){dx=-rightX*step;dz=-rightZ*step;}
+   else if(heldDir==='right'){dx=rightX*step;dz=rightZ*step;}
    const tryX=playerPos.x+dx, tryZ=playerPos.z+dz;
-   // เดินได้เฉพาะโซนทางเดินที่ออกแบบไว้ จึงไม่มีอาการติดกำแพงหรือหลุดฉาก
    if(isWalkable(tryX,playerPos.z))playerPos.x=tryX;
    if(isWalkable(playerPos.x,tryZ))playerPos.z=tryZ;
-   if(dx!==0||dz!==0){ playerModel && (playerModel.rotation.y=Math.atan2(dx,-dz)); cameraYaw=Math.atan2(dx,-dz); }
- }
- nearbyClue=null;let nearD=Infinity;for(const c of clueObjects){if(!c.visible||found.has(c.userData.clue))continue;let d=playerPos.distanceTo(new THREE.Vector3(c.position.x,1,c.position.z));if(d<nearD){nearD=d;nearbyClue=c}}
+   if(playerModel && (Math.abs(dx)+Math.abs(dz)>0.0001)) playerModel.rotation.y=Math.atan2(dx,-dz);
+ } nearbyClue=null;let nearD=Infinity;for(const c of clueObjects){if(!c.visible||found.has(c.userData.clue))continue;let d=playerPos.distanceTo(new THREE.Vector3(c.position.x,1,c.position.z));if(d<nearD){nearD=d;nearbyClue=c}}
  let near=nearbyClue&&nearD<=3.2;centerBtn.classList.toggle('ready',!!near);centerBtn.style.boxShadow=near?'0 0 28px rgba(255,209,102,.9),0 8px 24px #0007':'0 8px 24px #0007';
- if(playerModel){playerModel.position.copy(playerPos);playerModel.rotation.y=cameraYaw} if(activeToolModel&&armedTool){let c=clueObjects.find(x=>x.userData.clue===selectedClue+1);if(c)activeToolModel.position.set(c.position.x,c.position.y+1.0,c.position.z+1.0)}
+ if(playerModel){playerModel.position.copy(playerPos)} if(activeToolModel&&armedTool){let c=clueObjects.find(x=>x.userData.clue===selectedClue+1);if(c)activeToolModel.position.set(c.position.x,c.position.y+1.0,c.position.z+1.0)}
  const camTargetY=1.45;
  const camDistY=Math.sin(viewPitch)*CAMERA_RADIUS;
  const camHorizontal=Math.cos(viewPitch)*CAMERA_RADIUS;
