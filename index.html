@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>History Detective — Prototype 4.0</title>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>History Detective — Prototype 4.1 — checked</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111f;font-family:system-ui,-apple-system,sans-serif;color:#fff}#app{position:relative;width:100%;height:100%}#world{position:absolute;inset:0;width:100%;height:100%;display:block}#top{position:absolute;left:0;right:0;top:0;padding:12px 16px 18px;background:linear-gradient(rgba(4,10,18,.86),transparent);z-index:10;pointer-events:none}#title{font-size:clamp(21px,4vw,34px);font-weight:950}#status{font-size:clamp(13px,2.7vw,19px);margin-top:3px}.pill{position:absolute;right:14px;top:14px;z-index:12;background:rgba(15,25,40,.84);padding:9px 13px;border-radius:18px;font-weight:900;box-shadow:0 8px 25px #0005}.hint{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,20,35,.82);padding:9px 15px;border-radius:18px;font-size:14px;font-weight:800;white-space:nowrap;pointer-events:none}.screen{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at center,#23476aee,#030811fa)}.card{width:min(700px,94vw);background:#fff;color:#172033;border-radius:28px;padding:28px;box-shadow:0 25px 90px #0008}.card h1{font-size:clamp(30px,8vw,58px);margin:0 0 10px}.card p{font-size:clamp(16px,3.2vw,22px);line-height:1.55}.btn{border:0;border-radius:16px;padding:14px 22px;font-size:18px;font-weight:950;background:#ffd166;color:#241900;margin-top:12px}.hidden{display:none!important}#clueModal{position:absolute;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;background:#030811cc;backdrop-filter:blur(7px)}#clueBox{width:min(760px,94vw);max-height:88vh;overflow:auto;background:#fff;color:#172033;border-radius:26px;padding:25px;box-shadow:0 25px 90px #000a}#clueTitle{font-size:clamp(25px,6vw,42px);margin:5px 0 12px}#clueText{font-size:clamp(17px,3.4vw,23px);line-height:1.65}.tools{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.tool{flex:1 1 130px;min-height:92px;border:3px solid #dbe4ef;background:#f5f8fb;border-radius:18px;font-size:18px;font-weight:900;color:#182235}.tool.selected{border-color:#ffbf3c;background:#fff2c7;box-shadow:0 0 25px #ffd16688}.tool.wrong{animation:shake .3s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}#bag{position:absolute;right:14px;bottom:62px;z-index:12;background:#16243aee;border:2px solid #ffffff33;border-radius:18px;padding:10px 13px;font-weight:900;max-width:260px}#bag small{display:block;color:#b9c8da;margin-top:3px;font-weight:700}@media(max-width:700px){.hint{font-size:12px;max-width:92vw;overflow:hidden;text-overflow:ellipsis}.pill{font-size:13px}}
-</style></head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">พร้อมออกสำรวจพิพิธภัณฑ์</div></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">👣 แตะรอยเท้าที่เรืองแสงเพื่อเดิน • 🔎 เข้าใกล้วัตถุเพื่อสืบหลักฐาน</div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วยการแตะ <b>👣 รอยเท้าเรืองแสง</b><br>เมื่อพบเบาะแส ให้เลือก <b>🧰 เครื่องมือสืบหลักฐาน</b> ที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เข้าพิพิธภัณฑ์</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><div id="clueText"></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 👣</button></div></div></div>
+</style></head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">👣 เลือกรอยเท้าเรืองแสงเพื่อเดินต่อ</div></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">👣 แตะรอยเท้าเรืองแสงเพื่อเดิน • 🎒 สะพายกระเป๋าเก็บเบาะแส • 🔎 เข้าใกล้วัตถุ</div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วยการแตะ <b>👣 รอยเท้าเรืองแสง</b><br>เมื่อพบเบาะแส ให้เลือก <b>🧰 เครื่องมือสืบหลักฐาน</b> ที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เข้าพิพิธภัณฑ์</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><div id="clueText"></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 👣</button></div></div></div>
 <script type="module">
 const world=document.getElementById('world'),loading=document.getElementById('loading'),start=document.getElementById('start'),startBtn=document.getElementById('startBtn'),status=document.getElementById('status');
 const countEl=document.getElementById('count'),bag=document.getElementById('bag'),bagText=document.getElementById('bagText');
@@ -11,7 +11,7 @@ const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three
 let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog=new THREE.Fog(0x9ec4d8,28,58);
 let camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
 scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
-const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let currentTarget=null;let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,13),cameraYaw=0;let selectedClue=null,selectedTool=null,working=false;const found=new Set();
+const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let currentTarget=null;let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,13),cameraYaw=Math.PI;let selectedClue=null,selectedTool=null,working=false;const found=new Set();
 const C=[0xe9dfc8,0xd7c4a3,0x7d5b3f,0xffd166,0x86c5d8,0xd9a6d1,0x9fc7a3,0xf3c58c];
 function mat(c,rough=.7,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal})}function box(w,h,d,c,x,y,z,par=root){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;par.add(o);return o}function cyl(r,h,c,x,y,z,par=root){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,12),mat(c));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;par.add(o);return o}
 function label(text,pos,scale=2.4){let c=document.createElement('canvas'),g=c.getContext('2d');c.width=512;c.height=128;g.fillStyle='rgba(255,255,255,.94)';g.roundRect(8,8,496,112,20);g.fill();g.fillStyle='#172033';g.font='900 36px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,64);let s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.position.copy(pos);s.scale.set(scale,.6,1);root.add(s);return s}
@@ -23,30 +23,60 @@ function buildPlayer(){
  box(.18,.18,.18,0x1d2430,-.18,2.02,-.38,g);box(.18,.18,.18,0x1d2430,.18,2.02,-.38,g);
  box(.22,.8,.28,0x27344b,-.25,.25,0,g);box(.22,.8,.28,0x27344b,.25,.25,0,g);
  box(.95,.16,.72,0x1f2f49,0,2.28,0,g);
+ addBackpack(g);
  root.add(g);return g;}
 let playerModel=null;
+function addBackpack(g){
+  // กระเป๋าสะพายเฉียงด้านเดียว ให้เห็นชัดจากมุมมองด้านหลัง
+  const bag=box(.48,.62,.22,0x7a4b2d,.28,1.05,.42,g);
+  const flap=box(.38,.20,.04,0xa66a3a,.28,1.33,.54,g);
+  const strap=new THREE.Mesh(new THREE.TorusGeometry(.34,.055,8,24,Math.PI*1.05),mat(0x3f2a1d));
+  strap.rotation.y=Math.PI/2; strap.rotation.z=-.35; strap.position.set(.10,1.25,.37); g.add(strap);
+  const badge=box(.16,.16,.03,0xffd166,.28,1.08,.55,g);
+  badge.rotation.z=.25;
+}
 function buildMuseum(){
- box(34,.3,34,0xd8c7aa,0,-.15,0);box(34,6,.4,0xeee2cf,0,3,-17);box(.4,6,34,0xeee2cf,-17,3,0);box(.4,6,34,0xeee2cf,17,3,0);box(34,6,.4,0xeee2cf,0,3,17);
- // central rotunda
- cyl(7,.25,0xe7d3a9,0,-.02,0);for(let a=0;a<8;a++){let q=a*Math.PI/4;box(.35,5,.35,0xb58c62,Math.cos(q)*6,2.5,Math.sin(q)*6)}
- box(5,.3,5,0x9a704c,0,.2,0);let glass=new THREE.Mesh(new THREE.CylinderGeometry(2.8,2.8,3.5,20,1,true),new THREE.MeshPhysicalMaterial({color:0xcfeeff,transparent:true,opacity:.22,roughness:.05,transmission:.15}));glass.position.set(0,2,0);root.add(glass);box(2.8,2.4,2.8,0x4d3a2b,0,1.5,0);label('🔒 หลักฐานปริศนา',new THREE.Vector3(0,4.1,0),2.8);
- // rooms around lobby
+ box(34,.3,34,0xd8c7aa,0,-.15,0);
+ // ผนังโถงใหญ่
+ box(34,6,.4,0xeee2cf,0,3,-17);box(.4,6,34,0xeee2cf,-17,3,0);box(.4,6,34,0xeee2cf,17,3,0);box(34,6,.4,0xeee2cf,0,3,17);
+ // พื้นกระเบื้องสะท้อนแสงแบบโถงพิพิธภัณฑ์
+ for(let x=-15;x<=15;x+=3){for(let z=-15;z<=15;z+=3) box(2.75,.035,2.75,((x+z)/3)%2===0?0xf4ead5:0xe7d9bf,x,.02,z);}
+ // โถงกลาง / แท่นหลัก
+ cyl(7,.22,0xe7d3a9,0,.05,0);
+ for(let a=0;a<8;a++){let q=a*Math.PI/4;box(.38,5,.38,0xb58c62,Math.cos(q)*6,2.5,Math.sin(q)*6);box(.9,.18,.9,0xd8b16b,Math.cos(q)*6,5.08,Math.sin(q)*6)}
+ // ซุ้มด้านหลัง
+ box(10,4.8,.35,0x8c6748,0,2.4,-5.8);box(8.7,4.2,.18,0x4d3527,0,2.25,-5.58);
+ box(6.5,3.7,.16,0xf0d4a0,0,2.1,-5.4);
+ // หน้าจั่ว/ยอดซุ้ม
+ box(6.2,.35,.4,0x9a704c,0,5.0,-5.7);
+ for(let x=-2.6;x<=2.6;x+=1.3) box(.16,1.1,.3,0xb58c62,x,5.45,-5.72);
+ // ตู้กระจกกลางแบบมีแสงส่อง
+ box(5,.3,5,0x9a704c,0,.28,0);
+ let glass=new THREE.Mesh(new THREE.CylinderGeometry(2.8,2.8,3.5,24,1,true),new THREE.MeshPhysicalMaterial({color:0xdff6ff,transparent:true,opacity:.22,roughness:.04,transmission:.25}));glass.position.set(0,2.05,0);root.add(glass);
+ box(2.8,2.4,2.8,0x4d3a2b,0,1.5,0);
+ // ป้ายหลัก
+ label('🏛️ พิพิธภัณฑ์หลักฐานแห่งอดีต',new THREE.Vector3(0,6.15,-5.35),3.8);
+ label('🔒 หลักฐานปริศนา',new THREE.Vector3(0,4.25,0),2.8);
+ // ธงแขวนด้านหน้าโถง
+ const banner=(x,c,text)=>{box(1.15,3.5,.12,c,x,3.5,-4.4);box(1.38,.18,.16,0xb58c62,x,5.25,-4.4);label(text,new THREE.Vector3(x,3.55,-4.27),1.45)};
+ banner(-5.0,0xa64242,'อดีต'); banner(5.0,0x2867a8,'หลักฐาน');
+ // ห้องรอบโถง
  floorRoom(-10,10,0xe6c08f,'ห้องขุดค้น');floorRoom(0,11,0xb8d8e8,'ห้องแผนที่');floorRoom(10,10,0xc9e6c8,'ห้องหลักฐาน');floorRoom(10,-1,0xe7c4d7,'ห้องวิเคราะห์');floorRoom(0,-11,0xd4c9ef,'ห้องเครื่องปั้น');floorRoom(-10,-10,0xf0d3a0,'ห้องนักสืบ');
- // landmarks
+ // จุดเด่นแต่ละห้อง
  box(3.4,.7,2.5,0x8b6748,-10,.35,10);box(2.6,.35,1.8,0x65452e,-10,.88,10);cyl(.65,.8,0x8b5e3c,-10,1.35,10);label('⛏️ หลุมขุดค้น',new THREE.Vector3(-10,2.8,10),2.1);
- box(4.8,.25,3.2,0x6d91b4,0,.15,11);let map=box(4.3,.18,2.7,0x4f86a8,0,.38,11);for(let x=-1.6;x<=1.6;x+=.8) cyl(.09,.3,0xffd166,x,.55,11);label('🗺️ แผนที่ประเทศไทย',new THREE.Vector3(0,2.8,11),2.6);
+ box(4.8,.25,3.2,0x6d91b4,0,.15,11);box(4.3,.18,2.7,0x4f86a8,0,.38,11);for(let x=-1.6;x<=1.6;x+=.8)cyl(.09,.3,0xffd166,x,.55,11);label('🗺️ แผนที่ประเทศไทย',new THREE.Vector3(0,2.8,11),2.6);
  box(3.6,.4,2.6,0x8b6748,10,.25,10);cyl(1.1,2.4,0xc8b49b,10,1.6,10);cyl(.75,1.8,0x8b6b4e,10,1.6,10);label('🏺 ชั้นหลักฐาน',new THREE.Vector3(10,3.2,10),2.2);
  cyl(1.6,1.7,0xb65e42,10,.85,-1);cyl(1.15,1.9,0x7e392d,10,1.7,-1);cyl(.75,1.1,0xffa94d,10,2.65,-1);label('🔬 โต๊ะวิเคราะห์',new THREE.Vector3(10,3.5,-1),2.2);
  cyl(1.8,2.3,0xa95039,0,1.15,-11);cyl(1.45,2.6,0x743428,0,1.45,-11);box(2.4,.3,1.2,0xd59c61,0,.2,-8.8);label('🔥 เตาเผาโบราณ',new THREE.Vector3(0,3.5,-11),2.2);
- box(5,.25,.35,0x5a3d2a,-10,2,-13.2);for(let i=0;i<5;i++){box(.55,.55,.25,0xffd166,-11.8+i*.9,1.2,-13.1)}label('🕵️ กระดานคดี',new THREE.Vector3(-10,3.3,-10),2.2);
- // footsteps: safe, intentional navigation nodes
- const pts=[[0,13],[0,9],[0,5],[0,3],[0,0],[-4,0],[-8,0],[-10,4],[-10,7],[4,0],[8,0],[10,4],[10,7],[0,-4],[0,-8],[0,-11],[-4,-11],[-8,-10]];
+ box(5,.25,.35,0x5a3d2a,-10,2,-13.2);for(let i=0;i<5;i++)box(.55,.55,.25,0xffd166,-11.8+i*.9,1.2,-13.1);label('🕵️ กระดานคดี',new THREE.Vector3(-10,3.3,-10),2.2);
+ // รอยเท้า: เส้นทางหลักที่กำหนดไว้ล่วงหน้า
+ const pts=[[0,13],[0,10],[0,7],[0,4],[0,0],[-3,0],[-6,0],[-9,3],[-10,6],[3,0],[6,0],[9,3],[10,6],[0,-3],[0,-6],[0,-9],[0,-11],[-3,-11],[-6,-10],[-9,-10]];
  pts.forEach((p,i)=>addFoot(p[0],.05,p[1],i));
- // clue positions near room entrances/landmarks
+ // เบาะแส
  addClue(-10,1.4,8,1,'⛏️','กองชั้นดิน');addClue(0,1.4,8,2,'🗺️','แผนที่');addClue(10,1.4,8,3,'🧩','เศษภาชนะ');addClue(8,1.4,-1,4,'🔥','ดินและไฟ');addClue(0,1.4,-8,5,'🏺','รูปทรงภาชนะ');addClue(-7,1.4,-8,6,'3️⃣','สามส่วนที่ซ่อนอยู่');addClue(-10,1.4,-8,7,'🏺','ภาชนะสามขา');addClue(-10,1.4,-11.8,8,'📂','แฟ้มนักโบราณคดี');
 }
 function addFoot(x,y,z,i){let g=new THREE.Group();g.position.set(x,y,z);g.userData.target=new THREE.Vector3(x,1,z);let glow=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.08,20),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xffa000,emissiveIntensity:1.8,transparent:true,opacity:.9}));g.add(glow);let f=new THREE.Mesh(new THREE.BoxGeometry(.35,.09,.62),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1.2}));f.position.y=.06;g.add(f);root.add(g);walkables.push(g)}
-function addClue(x,y,z,n,icon,name){let g=new THREE.Group();g.position.set(x,y,z);g.userData={clue:n,name};let base=box(.9,.18,.9,0x8b6b4e,0,0,0,g);let orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.42,1),new THREE.MeshStandardMaterial({color:0x72d6ff,emissive:0x1476a6,emissiveIntensity:1.5}));orb.position.y=.55;g.add(orb);let s=label(icon,new THREE.Vector3(x,y+1.35,z),1.25);s.userData.parentClue=g;root.remove(s);g.add(s);let ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.05,10,30),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xff9f00,emissiveIntensity:1.5}));ring.rotation.x=Math.PI/2;ring.position.y=.2;g.add(ring);root.add(g);clueObjects.push(g)}
+function addClue(x,y,z,n,icon,name){let g=new THREE.Group();g.position.set(x,y,z);g.userData={clue:n,name};let base=box(.9,.18,.9,0x8b6b4e,0,0,0,g);let orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.42,1),new THREE.MeshStandardMaterial({color:0x72d6ff,emissive:0x1476a6,emissiveIntensity:1.5}));orb.position.y=.55;g.add(orb);let s=label(icon,new THREE.Vector3(0,1.35,0),1.25);s.userData.parentClue=g;root.remove(s);g.add(s);let ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.05,10,30),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xff9f00,emissiveIntensity:1.5}));ring.rotation.x=Math.PI/2;ring.position.y=.2;g.add(ring);root.add(g);clueObjects.push(g)}
 // clue data and tools
 const data=[
 ['ร่องรอยที่อยู่ใต้ผืนดิน','นักโบราณคดีพบวัตถุจากการขุดค้นในชั้นดินของแหล่งโบราณคดี วัตถุเป็นสิ่งที่หลงเหลือจากผู้คนในอดีต.',['แปรงขุดค้น','แผนที่','เตาเผา'],'แปรงขุดค้น'],
@@ -67,5 +97,5 @@ startBtn.onclick=()=>{start.classList.add('hidden');gameStarted=true;status.text
 world.addEventListener('pointerdown',e=>{if(!gameStarted||clueModal.style.display==='flex')return;let r=world.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let mouse=new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),ray=new THREE.Raycaster();ray.setFromCamera(mouse,camera);let hits=ray.intersectObjects([...walkables,...clueObjects],true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!walkables.includes(o)&&!clueObjects.includes(o))o=o.parent;if(walkables.includes(o))goTo(o);else if(clueObjects.includes(o)){let d=o.userData;let dist=playerPos.distanceTo(new THREE.Vector3(o.position.x,1,o.position.z));if(dist>3.2){status.textContent='👣 เดินตามรอยเท้าเข้ามาใกล้เบาะแสก่อน';return}openClue(d.clue)}});
 function animate(){requestAnimationFrame(animate);let dt=Math.min(.05,(performance.now()-(animate.last||performance.now()))/1000);animate.last=performance.now();if(currentTarget){let v=currentTarget.clone().sub(playerPos);v.y=0;let len=v.length();if(len<.06){playerPos.copy(currentTarget);currentTarget=null;status.textContent=found.size===8?'🎉 ครบ 8 เบาะแสแล้ว':'👣 เลือกรอยเท้าเรืองแสงเพื่อเดินต่อ'}else{v.normalize();let step=Math.min(len,dt*5.0);playerPos.addScaledVector(v,step);cameraYaw=Math.atan2(v.x,v.z)}}if(playerModel){playerModel.position.copy(playerPos);playerModel.rotation.y=cameraYaw}camera.position.set(playerPos.x-Math.sin(cameraYaw)*5.2,3.4,playerPos.z-Math.cos(cameraYaw)*5.2);camera.lookAt(playerPos.x,1.35,playerPos.z);let t=performance.now()*.002;walkables.forEach((g,i)=>{g.position.y=.05+Math.sin(t+i)*.035;g.children[0].scale.setScalar(1+.08*Math.sin(t*1.5+i))});clueObjects.forEach((g,i)=>{g.position.y=1.4+Math.sin(t*1.3+i)*.16});renderer.render(scene,camera)}
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
-buildMuseum();playerModel=buildPlayer();playerModel.position.copy(playerPos);camera.position.set(0,3.4,18);camera.lookAt(0,1,10);loading.classList.add('hidden');start.classList.remove('hidden');animate();
+buildMuseum();playerModel=buildPlayer();playerModel.position.copy(playerPos);playerModel.rotation.y=cameraYaw;camera.position.set(0,3.8,19);camera.lookAt(0,1.55,4.5);loading.classList.add('hidden');start.classList.remove('hidden');animate();
 </script></body></html>
