@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>History Detective — Prototype 6.0 — Evidence-Based Learning Museum</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111f;font-family:system-ui,-apple-system,sans-serif;color:#fff}#app{position:relative;width:100%;height:100%}#world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}#top{position:absolute;left:0;right:0;top:0;padding:12px 16px 18px;background:linear-gradient(rgba(4,10,18,.86),transparent);z-index:10;pointer-events:none}#title{font-size:clamp(21px,4vw,34px);font-weight:950}#status{font-size:clamp(13px,2.7vw,19px);margin-top:3px}.pill{position:absolute;right:14px;top:14px;z-index:12;background:rgba(15,25,40,.84);padding:9px 13px;border-radius:18px;font-weight:900;box-shadow:0 8px 25px #0005}.hint{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(10,20,35,.82);padding:9px 15px;border-radius:18px;font-size:14px;font-weight:800;white-space:nowrap;pointer-events:none}.screen{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at center,#23476aee,#030811fa)}.card{width:min(700px,94vw);background:#fff;color:#172033;border-radius:28px;padding:28px;box-shadow:0 25px 90px #0008}.card h1{font-size:clamp(30px,8vw,58px);margin:0 0 10px}.card p{font-size:clamp(16px,3.2vw,22px);line-height:1.55}.btn{border:0;border-radius:16px;padding:14px 22px;font-size:18px;font-weight:950;background:#ffd166;color:#241900;margin-top:12px}.hidden{display:none!important}.thinkGrid{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}.thinkPick{border:3px solid #d9e0e8;border-radius:18px;background:#f7f9fb;color:#182235;padding:15px;font-size:18px;font-weight:950;text-align:left}.thinkPick.selected{border-color:#7c5cff;background:#eeeaff;box-shadow:0 0 22px #8b5cf655}.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}.chain span{padding:9px 11px;border-radius:14px;background:#f1f4f7;color:#243047;font-weight:900}.chain b{color:#8b6b2b}.thinkQuestion{padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#fff7dc,#f3e7c8);border:2px solid #e4c76e;color:#4b3922;font-weight:900;line-height:1.55}#clueModal{position:absolute;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;background:#030811cc;backdrop-filter:blur(7px)}#clueBox{width:min(760px,94vw);max-height:88vh;overflow:auto;background:#fff;color:#172033;border-radius:26px;padding:25px;box-shadow:0 25px 90px #000a}#clueTitle{font-size:clamp(25px,6vw,42px);margin:5px 0 12px}#clueText{font-size:clamp(17px,3.4vw,23px);line-height:1.65}.tools{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.tool{flex:1 1 130px;min-height:92px;border:3px solid #dbe4ef;background:#f5f8fb;border-radius:18px;font-size:18px;font-weight:900;color:#182235}.tool.selected{border-color:#ffbf3c;background:#fff2c7;box-shadow:0 0 25px #ffd16688}.tool.wrong{animation:shake .3s}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}#bag{position:absolute;right:14px;bottom:62px;z-index:12;background:#16243aee;border:2px solid #ffffff33;border-radius:18px;padding:10px 13px;font-weight:900;max-width:260px}#bag small{display:block;color:#b9c8da;margin-top:3px;font-weight:700}@media(max-width:700px){.hint{font-size:12px;max-width:92vw;overflow:hidden;text-overflow:ellipsis}.pill{font-size:13px}}
+#movePad{position:absolute;left:18px;bottom:70px;z-index:25;width:180px;height:180px;display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px 60px;gap:0;touch-action:none;user-select:none}#movePad button,#actionBtn{border:2px solid rgba(255,255,255,.35);background:rgba(20,35,55,.88);color:#fff;font-weight:950;box-shadow:0 8px 24px #0007;touch-action:none;user-select:none;-webkit-user-select:none}#movePad button{font-size:28px;width:60px;height:60px}#movePad button:active{background:#b87a28;transform:scale(.96)}#up{grid-column:2;grid-row:1;border-radius:18px 18px 8px 8px}#left{grid-column:1;grid-row:2;border-radius:18px 8px 8px 18px}#center{grid-column:2;grid-row:2;border-radius:50%;font-size:24px!important;background:rgba(75,55,30,.94)!important}#center.ready{background:#b87a28!important;animation:pulse 1.15s infinite}#center:not(.ready){filter:none;box-shadow:0 8px 24px #0007!important}@keyframes pulse{50%{transform:scale(1.07)}}#right{grid-column:3;grid-row:2;border-radius:8px 18px 18px 8px}#down{grid-column:2;grid-row:3;border-radius:8px 8px 18px 18px}@media(max-width:700px){#movePad{left:12px;bottom:62px;transform:scale(.86);transform-origin:bottom left}.hint{bottom:12px;max-width:88vw}} #toolChoice{display:none;position:absolute;inset:0;z-index:75;align-items:center;justify-content:center;padding:18px;background:#030811bb;backdrop-filter:blur(6px)}#toolChoice .card{max-height:88vh;overflow:auto}#toolChoiceTitle{font-size:clamp(25px,6vw,42px);margin:0 0 8px}.toolGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.toolPick{min-height:96px;border:3px solid #dbe4ef;background:#f5f8fb;border-radius:18px;font-size:17px;font-weight:950;color:#182235}.toolPick:active{transform:scale(.97)}.toolPick::first-line{font-size:20px}.toolPick.ready{border-color:#d5a63a;box-shadow:0 0 18px #ffd16655}.toolPick.selected{border-color:#ffbf3c;background:#fff2c7;box-shadow:0 0 25px #ffd16688}.actionNote{min-height:30px;margin-top:12px;font-weight:900}.evidenceList{display:grid;gap:10px;margin:16px 0}.evidenceItem{padding:13px 15px;border-radius:14px;background:#f2f5f8;font-weight:800;color:#243047}.candidateGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.supportGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}.supportPick{border:3px solid #d9e0e8;border-radius:16px;background:#f7f9fb;color:#182235;text-align:left;padding:12px;font-weight:850;line-height:1.4}.supportPick.selected{border-color:#55a86b;background:#eaf8ee;box-shadow:0 0 18px #6fcf9755}.supportPick .tag{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#e9eef5;font-size:12px}.supportCount{padding:12px 14px;border-radius:14px;background:#eef4ff;border:2px solid #bfd4ff;color:#20385f;font-weight:950}.reasonPrompt{padding:13px 15px;border-radius:16px;background:linear-gradient(135deg,#fff7dc,#f1e4c6);border:2px solid #e4c76e;color:#4b3922;font-weight:900;line-height:1.5}.reasonChoices{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.reasonChoice{border:2px solid #d9e0e8;border-radius:999px;padding:8px 12px;background:#fff;color:#243047;font-weight:850}.reasonChoice.selected{border-color:#8b5cf6;background:#f0eaff}.candidate{min-height:120px;border:3px solid #d9e0e8;border-radius:18px;background:#f7f9fb;color:#182235;font-size:18px;font-weight:950;padding:12px}.candidate.selected{border-color:#e3a72e;background:#fff1bf;box-shadow:0 0 22px #ffd16688}.reveal{background:#8b5cf6!important;color:#fff!important}.revealScene{position:relative;min-height:280px;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#fff7bf 0,#8e6d43 18%,#3b2b20 45%,#10141d 100%);display:flex;align-items:center;justify-content:center;margin:12px 0}.potReveal{font-size:110px;filter:drop-shadow(0 0 25px #ffd166);animation:potIn .9s ease-out both}.beam{position:absolute;top:-30px;width:190px;height:330px;background:linear-gradient(180deg,#fff8c8aa,#ffd16622,transparent);clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);animation:beam 1.8s infinite alternate}.infoPanels{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}.infoPanel{padding:12px;background:#f7f0df;border-radius:14px;color:#382b1e}.infoPanel b{display:block;color:#8b5e2f;margin-bottom:4px}@keyframes potIn{from{transform:translateY(45px) scale(.55);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}@keyframes beam{from{opacity:.35;transform:scaleX(.85)}to{opacity:.8;transform:scaleX(1.08)}}@media(max-width:700px){.toolGrid,.candidateGrid,.infoPanels{grid-template-columns:1fr 1fr}.candidate{font-size:15px;min-height:105px}}#phaseBar{position:absolute;top:78px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background:rgba(15,25,38,.82);backdrop-filter:blur(7px);color:#fff;font-weight:900;font-size:13px;box-shadow:0 6px 20px #0005;white-space:nowrap}.phase{opacity:.48}.phase.active{opacity:1;color:#ffd166;text-shadow:0 0 10px #ffd166}.phase.done{opacity:.9;color:#9fe3b1}@media(max-width:700px){#phaseBar{top:68px;font-size:11px;gap:4px;padding:6px 9px}}.learnNote{margin:10px 0;padding:11px 13px;border-left:5px solid #d5a63a;background:#fff8df;border-radius:10px;color:#3b3020;font-weight:800;line-height:1.5}.reasonBox{margin-top:12px;padding:12px;border:2px dashed #d5a63a;border-radius:14px;background:#fffaf0;color:#4a3a28;font-weight:800}.boardStep{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#f4f6f8;margin:7px 0;color:#243047}.boardStep b{color:#9a6b20;min-width:26px}
+/* ===== Prototype 6.0 learning + museum polish ===== */
+#teacherDock{position:absolute;right:14px;bottom:14px;z-index:22;display:flex;gap:8px;pointer-events:auto}
+.teacherBtn{border:2px solid #ffffff44;background:#17263bee;color:#fff;border-radius:14px;padding:9px 12px;font-weight:950;box-shadow:0 8px 22px #0006}
+.teacherBtn:active{transform:scale(.96)}
+#learningToast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:45;pointer-events:none;background:rgba(20,30,45,.94);border:2px solid #ffd166;border-radius:20px;padding:15px 20px;text-align:center;font-weight:950;box-shadow:0 20px 60px #0008;opacity:0;transition:.25s;max-width:min(520px,86vw)}
+#learningToast.show{opacity:1}
+.supportPick.disabled{opacity:.45;filter:grayscale(.5)}
+.evidenceBadge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e9f5ec;color:#317143;font-size:12px;margin-left:5px}
+.choiceHint{font-size:14px;color:#596579;margin-top:5px}
+.finalSummary{padding:14px;border-radius:16px;background:linear-gradient(135deg,#eef7ff,#f7f1ff);border:2px solid #cad8ee;color:#243047;line-height:1.55;font-weight:800}
+.roomSign{font-size:14px!important}
+</style></head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 กดค้างเพื่อเดิน • 👆 ลากหน้าจอหมุนมุมกล้อง • 🧰 ปุ่มจะสว่างเมื่อเข้าใกล้เบาะแส • 🔎 แตะเบาะแส</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
+<div id="toolChoice"><div class="card"><div id="toolChoiceNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="toolChoiceTitle">🧰 เลือกเครื่องมือสำหรับตรวจสอบ</h2><p id="toolChoiceHint">เลือกเครื่องมือที่คิดว่าเหมาะสม แล้วเครื่องมือจะปรากฏอยู่หน้าเบาะแส</p><div id="toolPreview" style="display:none;margin:12px 0;padding:12px 16px;border-radius:16px;background:linear-gradient(135deg,#fff8dc,#f4ead1);border:2px solid #e7c36b;text-align:center;font-size:24px;font-weight:950;color:#513b1f"></div><div class="toolGrid" id="toolChoiceGrid"></div><div class="actionNote" id="toolChoiceMsg"></div><button class="btn hidden" id="armToolBtn">🧰 นำไอเท็มไปตรวจสอบ</button><button class="btn" id="cancelToolBtn">กลับไปสำรวจ 🎮</button></div></div>
+<div id="thinkModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🔎</div><h1 id="thinkTitle" style="font-size:clamp(28px,6vw,46px)">หยุดคิดแบบนักสืบ</h1><div class="learnNote">💡 นักสืบที่ดีไม่รีบตอบ แต่ใช้ข้อมูลที่พบมา “ตั้งข้อสันนิษฐาน” และพร้อมปรับเมื่อมีเบาะแสใหม่</div><div class="thinkQuestion" id="thinkQuestion"></div><div class="chain" id="thinkChain"></div><div class="thinkGrid" id="thinkGrid"></div><div id="thinkMsg" style="font-weight:900;min-height:30px"></div><button class="btn hidden" id="thinkContinueBtn">➡️ ไปค้นหาเบาะแสต่อ</button></div></div>
+<div id="finalModal" class="screen hidden"><div class="card"><div style="font-size:48px">🎒🔎</div><h1 style="font-size:clamp(28px,6vw,46px)">ภารกิจสุดท้าย: สร้างคำตอบจากหลักฐาน</h1><p>นักสืบไม่ควรเลือกคำตอบจากการเดา — ต้องมี <b>ข้อมูลที่สนับสนุน</b> และอธิบายได้ว่าเหตุใดข้อมูลนั้นจึงเกี่ยวข้อง</p><div class="finalSummary">🎯 <b>ภารกิจสุดท้าย</b><br>เลือกเบาะแสอย่างน้อย 3 ชิ้น → บอกว่าแต่ละชิ้นช่วยเราเรื่องอะไร → เชื่อมโยงเป็นเหตุผล → จึงเลือกข้อสันนิษฐาน</div><div class="learnNote">🧠 กติกา: เลือกเบาะแสที่กลุ่มคิดว่า “สนับสนุนคำตอบ” อย่างน้อย <b>3 ชิ้น</b> แล้วอธิบายความเชื่อมโยง ก่อนเลือกคำตอบ</div><h2>1️⃣ เลือกหลักฐานสนับสนุนอย่างน้อย 3 ชิ้น</h2><div class="supportCount" id="supportCount">เลือกแล้ว 0 / 3 ชิ้น</div><div class="supportGrid" id="supportGrid"></div><div class="reasonPrompt">💬 ลองพูดให้เพื่อนฟัง: “เราเลือกหลักฐานเหล่านี้ เพราะ...”</div><div class="reasonChoices" id="reasonChoices"><button class="reasonChoice" data-reason="บริบทและช่วงเวลา">🕰️ บอกบริบท/ช่วงเวลา</button><button class="reasonChoice" data-reason="วัสดุและการผลิต">🏺 บอกวัสดุ/การผลิต</button><button class="reasonChoice" data-reason="รูปร่างและลักษณะ">🔎 บอกรูปร่าง/ลักษณะ</button><button class="reasonChoice" data-reason="แหล่งที่พบ">📍 บอกแหล่งที่พบ</button></div><div id="supportMsg" style="font-weight:900;min-height:28px"></div><h2>2️⃣ เลือกข้อสันนิษฐานของกลุ่ม</h2><div class="candidateGrid" id="candidateGrid"></div><div id="candidateMsg" style="font-weight:900;min-height:28px"></div><button class="btn hidden" id="boardBtn">🧠 เปิดกระดานเชื่อมโยงหลักฐาน</button><button class="btn reveal hidden" id="teacherRevealBtn">✨ เฉลยหลักฐานที่ตามหา</button></div></div>
+<div id="boardModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🕵️</div><h1 style="font-size:clamp(28px,6vw,46px)">กระดานสืบสวนหลักฐาน</h1><p>ลองเชื่อมโยงข้อมูลจาก 8 เบาะแส ก่อนตัดสินใจเลือกคำตอบ</p><div class="boardStep"><b>1</b><div><strong>แหล่งที่พบ</strong><br>ขุดพบในชั้นดินของแหล่งโบราณคดี → เป็นร่องรอยจากอดีต</div></div><div class="boardStep"><b>2</b><div><strong>ช่วงเวลาและบริบท</strong><br>สัมพันธ์กับชุมชนก่อนประวัติศาสตร์</div></div><div class="boardStep"><b>3</b><div><strong>วัสดุและการผลิต</strong><br>เป็นภาชนะดินเผา → ขึ้นรูป ตากแห้ง และเผา</div></div><div class="boardStep"><b>4</b><div><strong>รูปร่าง</strong><br>มีส่วนยื่นรองรับน้ำหนัก และมีจำนวน 3 ส่วน</div></div><div class="reasonBox">🎯 สรุปจากการเชื่อมโยง: เรากำลังมองหาหลักฐานประเภท “ภาชนะดินเผาสามขา” มากขึ้นเรื่อย ๆ</div><div class="evidenceList" id="boardEvidenceList"></div><div class="thinkQuestion">💬 คำถามสำหรับกลุ่ม: “เบาะแสใดช่วยให้เราเปลี่ยนจากการคาดเดา มาเป็นข้อสันนิษฐานที่มีเหตุผลมากขึ้น?”</div><button class="btn" id="closeBoardBtn">กลับไปเลือกคำตอบ 🎯</button></div></div>
+<div id="revealModal" class="screen hidden"><div class="card"><div style="font-weight:950;color:#8b6b2b">🏛️ ห้องเฉลย</div><h1 style="font-size:clamp(30px,7vw,54px)">เฉลยหลักฐานที่ตามหา</h1><div class="revealScene"><div class="beam"></div><div class="potReveal">🏺</div></div><div class="infoPanels"><div class="infoPanel"><b>ชื่อหลักฐาน</b>ภาชนะดินเผาสามขา / หม้อสามขา</div><div class="infoPanel"><b>ยุคสมัย</b>สมัยก่อนประวัติศาสตร์</div><div class="infoPanel"><b>วิธีการพบ</b>พบจากการขุดค้นในแหล่งโบราณคดีและชั้นวัฒนธรรม</div><div class="infoPanel"><b>ลักษณะเด่น / ทำไมต้องสามขา</b>เป็นภาชนะทรงคล้ายอ่าง มีขาอ้วนเตี้ย 3 ส่วนรองรับตัวภาชนะ</div><div class="infoPanel"><b>ความสำคัญของหลักฐาน</b>ช่วยศึกษาฝีมือการทำเครื่องปั้นและวิถีชีวิตของชุมชนก่อนประวัติศาสตร์</div><div class="infoPanel"><b>ความเชื่อมโยงกับปัจจุบัน</b>แนวคิดการใช้ภาชนะและการผลิตเครื่องปั้นยังเชื่อมโยงกับงานหัตถกรรมและการศึกษาทางโบราณคดีในปัจจุบัน</div></div><button class="btn" id="finishBtn">🎉 จบภารกิจนักสืบ</button></div></div>
+<script type="module">
+const world=document.getElementById('world'),loading=document.getElementById('loading'),start=document.getElementById('start'),startBtn=document.getElementById('startBtn'),status=document.getElementById('status');
+const countEl=document.getElementById('count'),bag=document.getElementById('bag'),bagText=document.getElementById('bagText');
+const movePad=document.getElementById('movePad'),dirButtons={up:document.getElementById('up'),left:document.getElementById('left'),right:document.getElementById('right'),down:document.getElementById('down')},centerBtn=document.getElementById('center');
+const clueModal=document.getElementById('clueModal'),clueNo=document.getElementById('clueNo'),clueTitle=document.getElementById('clueTitle'),clueText=document.getElementById('clueText'),toolStage=document.getElementById('toolStage'),toolsEl=document.getElementById('tools'),toolMsg=document.getElementById('toolMsg'),useClueBtn=document.getElementById('useClueBtn'),collectBtn=document.getElementById('collectBtn'),closeBtn=document.getElementById('closeBtn');
+const supportGrid=document.getElementById('supportGrid'),supportCount=document.getElementById('supportCount'),supportMsg=document.getElementById('supportMsg'),reasonChoices=document.getElementById('reasonChoices');
+const toolChoice=document.getElementById('toolChoice'),toolChoiceNo=document.getElementById('toolChoiceNo'),toolChoiceTitle=document.getElementById('toolChoiceTitle'),toolChoiceGrid=document.getElementById('toolChoiceGrid'),toolChoiceMsg=document.getElementById('toolChoiceMsg'),toolPreview=document.getElementById('toolPreview'),armToolBtn=document.getElementById('armToolBtn'),cancelToolBtn=document.getElementById('cancelToolBtn'),finalModal=document.getElementById('finalModal'),evidenceList=document.getElementById('evidenceList'),candidateGrid=document.getElementById('candidateGrid'),candidateMsg=document.getElementById('candidateMsg'),teacherRevealBtn=document.getElementById('teacherRevealBtn'),revealModal=document.getElementById('revealModal'),finishBtn=document.getElementById('finishBtn'),thinkModal=document.getElementById('thinkModal'),thinkTitle=document.getElementById('thinkTitle'),thinkQuestion=document.getElementById('thinkQuestion'),thinkChain=document.getElementById('thinkChain'),thinkGrid=document.getElementById('thinkGrid'),thinkMsg=document.getElementById('thinkMsg'),thinkContinueBtn=document.getElementById('thinkContinueBtn'),boardModal=document.getElementById('boardModal'),boardBtn=document.getElementById('boardBtn'),boardEvidenceList=document.getElementById('boardEvidenceList'),closeBoardBtn=document.getElementById('closeBoardBtn');
+const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
+let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog=new THREE.Fog(0x9ec4d8,28,58);
+let camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
+scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
+const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,21),cameraYaw=0;let selectedClue=null,selectedTool=null,armedTool=null,working=false;const found=new Set();let candidateSelected=null;const supportSelected=new Set();const reasonSelected=new Set();const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
+let heldDir=null;const MOVE_SPEED=3.8;const WORLD_LIMIT=25.5;
+let viewYaw=0, viewPitch=0.28; let cameraDragging=false, cameraMoved=false, cameraStartX=0, cameraStartY=0, cameraLastX=0, cameraLastY=0;
+const CAMERA_RADIUS=8.0, CAMERA_HEIGHT=4.6, CAMERA_SENS=0.008, CAMERA_PITCH_SENS=0.005, CAMERA_MIN_PITCH=-0.05, CAMERA_MAX_PITCH=0.78; const CLUE_USE_DISTANCE=2.4;
+const C=[0xe9dfc8,0xd7c4a3,0x7d5b3f,0xffd166,0x86c5d8,0xd9a6d1,0x9fc7a3,0xf3c58c];
+function mat(c,rough=.7,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal})}function box(w,h,d,c,x,y,z,par=root){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;par.add(o);return o}function cyl(r,h,c,x,y,z,par=root){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,12),mat(c));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;par.add(o);return o}
+function label(text,pos,scale=2.4){let c=document.createElement('canvas'),g=c.getContext('2d');c.width=512;c.height=128;g.fillStyle='rgba(255,255,255,.94)';g.roundRect(8,8,496,112,20);g.fill();g.fillStyle='#172033';g.font='900 36px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,64);let s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.position.copy(pos);s.scale.set(scale,.6,1);root.add(s);return s}
+function floorRoom(x,z,c,name){
+ box(9,.25,8,c,x,-.1,z);
+ label(name,new THREE.Vector3(x,2.9,z),2.3);
+ // ผนังด้านทางเดินเว้นช่องประตูตรงกลาง เพื่อให้เข้า-ออกห้องได้จริง
+ const wallZ=z-3.9;
+ box(2.7,3.8,.2,0xf8efe0,x-2.85,1.9,wallZ);
+ box(2.7,3.8,.2,0xf8efe0,x+2.85,1.9,wallZ);
+ box(.25,3.6,.25,0x9d805f,x-4.1,1.8,wallZ);
+ box(.25,3.6,.25,0x9d805f,x+4.1,1.8,wallZ);
+ // กรอบประตู
+ box(.25,3.6,.25,0xb58c62,x-1.6,1.8,wallZ);
+ box(.25,3.6,.25,0xb58c62,x+1.6,1.8,wallZ);
+ box(3.45,.25,.28,0xb58c62,x,3.65,wallZ);
+}
+function buildPlayer(){
+ const g=new THREE.Group();
+ const body=box(.9,1.2,.65,0x4d78b8,0,.95,0,g);
+ const head=box(.72,.72,.72,0xc98f62,0,1.9,0,g);
+ box(.18,.18,.18,0x1d2430,-.18,2.02,-.38,g);box(.18,.18,.18,0x1d2430,.18,2.02,-.38,g);
+ box(.22,.8,.28,0x27344b,-.25,.25,0,g);box(.22,.8,.28,0x27344b,.25,.25,0,g);
+ box(.95,.16,.72,0x1f2f49,0,2.28,0,g);
+ addBackpack(g);
+ root.add(g);return g;}
+let playerModel=null;
+function addBackpack(g){
+  // กระเป๋าสะพายเฉียงด้านเดียว ให้เห็นชัดจากมุมมองด้านหลัง
+  const bag=box(.48,.62,.22,0x7a4b2d,.28,1.05,.42,g);
+  const flap=box(.38,.20,.04,0xa66a3a,.28,1.33,.54,g);
+  const strap=new THREE.Mesh(new THREE.TorusGeometry(.34,.055,8,24,Math.PI*1.05),mat(0x3f2a1d));
+  strap.rotation.y=Math.PI/2; strap.rotation.z=-.35; strap.position.set(.10,1.25,.37); g.add(strap);
+  const badge=box(.16,.16,.03,0xffd166,.28,1.08,.55,g);
+  badge.rotation.z=.25;
+}
+function buildMuseum(){
+ // GRAND MUSEUM — โครงสร้างใหญ่ตามภาพต้นแบบ: โถงกลาง + 6 ห้อง + ทางเดินกว้าง
+ box(54,.3,54,0xd8c7aa,0,-.15,0);
+ // ผนังรอบอาคารและช่องเปิดหลัก
+ box(54,8,.45,0xeee2cf,0,4,-27); box(.45,8,54,0xeee2cf,-27,4,0); box(.45,8,54,0xeee2cf,27,4,0);
+ box(18,8,.45,0xeee2cf,-18,4,27); box(18,8,.45,0xeee2cf,18,4,27);
+ // พื้นกระเบื้องโถงใหญ่
+ for(let x=-25;x<=25;x+=3){for(let z=-25;z<=25;z+=3) box(2.78,.035,2.78,((Math.round(x/3)+Math.round(z/3))%2===0)?0xf4ead5:0xe7d9bf,x,.02,z);}
+ // เสาหลักสูงและระเบียงชั้นสอง
+ for(let x=-24;x<=24;x+=6){
+   box(.55,8,.55,0xb58c62,x,4,-24); box(.9,.22,.9,0xd8b16b,x,8.1,-24);
+   box(.55,8,.55,0xb58c62,x,4,24); box(.9,.22,.9,0xd8b16b,x,8.1,24);
+ }
+ for(let z=-18;z<=18;z+=6){
+   box(.55,8,.55,0xb58c62,-24,4,z); box(.9,.22,.9,0xd8b16b,-24,8.1,z);
+   box(.55,8,.55,0xb58c62,24,4,z); box(.9,.22,.9,0xd8b16b,24,8.1,z);
+ }
+ // ระเบียงจำลองด้านบน
+ box(52,.22,2.0,0x8f6948,0,7.1,-21.5); box(52,.22,2.0,0x8f6948,0,7.1,21.5);
+ for(let x=-24;x<=24;x+=2) { box(.12,1.0,.12,0xd2a15f,x,7.65,-22.4); box(.12,1.0,.12,0xd2a15f,x,7.65,22.4); }
+ // โถงกลางขนาดใหญ่
+ cyl(10.5,.28,0xe7d3a9,0,.05,0);
+ cyl(8.7,.18,0x5c7890,0,.22,0);
+ cyl(7.7,.14,0xe9c86f,0,.34,0);
+ // เสารอบตู้ปริศนา
+ for(let a=0;a<12;a++){let q=a*Math.PI/6;box(.48,7,.48,0xb58c62,Math.cos(q)*9,3.5,Math.sin(q)*9);box(1,.18,1,0xd8b16b,Math.cos(q)*9,7.08,Math.sin(q)*9)}
+ // ซุ้มหลัง + ตู้กระจกกลาง
+ box(12,5.8,.4,0x8c6748,0,3,-9.5); box(10.5,5.1,.18,0x4d3527,0,2.8,-9.2);
+ box(8.2,4.5,.16,0xf0d4a0,0,2.5,-9.0);
+ box(7.2,.35,.4,0x9a704c,0,6.0,-9.45);
+ for(let x=-3;x<=3;x+=1.5) box(.18,1.2,.3,0xb58c62,x,6.5,-9.5);
+ box(7,.35,7,0x9a704c,0,.38,0);
+ let glass=new THREE.Mesh(new THREE.CylinderGeometry(3.7,3.7,4.8,28,1,true),new THREE.MeshPhysicalMaterial({color:0xdff6ff,transparent:true,opacity:.22,roughness:.04,transmission:.3}));glass.position.set(0,2.65,0);root.add(glass);
+ box(3.6,2.8,3.6,0x4d3a2b,0,1.75,0);
+ label('🏛️ พิพิธภัณฑ์หลักฐานแห่งอดีต',new THREE.Vector3(0,7.15,-8.9),4.4);
+ label('🔒 วัตถุปริศนา • เก็บเบาะแสให้ครบ 8 ชิ้น',new THREE.Vector3(0,4.9,0),2.8);
+ const banner=(x,c,text)=>{box(1.35,4.2,.14,c,x,4.2,-6.7);box(1.6,.2,.16,0xb58c62,x,6.35,-6.7);label(text,new THREE.Vector3(x,4.15,-6.52),1.55)};
+ banner(-6.8,0xa64242,'อดีต\nส่องทาง'); banner(6.8,0x2867a8,'หลักฐาน\nเล่าเรื่อง');
+ // ห้องต่าง ๆ ขนาดใหญ่รอบโถง
+ floorRoom(-16,15,0xe6c08f,'ห้องขุดค้น');
+ floorRoom(0,16,0xb8d8e8,'ห้องแผนที่');
+ floorRoom(16,15,0xc9e6c8,'ห้องหลักฐาน');
+ floorRoom(16,-14,0xe7c4d7,'ห้องวิเคราะห์');
+ floorRoom(0,-16,0xd4c9ef,'ห้องเครื่องปั้น');
+ floorRoom(-16,-14,0xf0d3a0,'ห้องนักสืบ');
+ // ซุ้มประตูทางเข้าทั้ง 6 ห้อง
+ const portal=(x,z,axis,text)=>{
+   const w=axis==='x'?6.5:.35, d=axis==='x'?.35:6.5;
+   if(axis==='x'){box(.45,5.0,.45,x-3.3,2.5,z);box(.45,5.0,.45,x+3.3,2.5,z);box(7.1,.45,.45,x,5.0,z)}
+   else {box(.45,5.0,.45,x,2.5,z-3.3);box(.45,5.0,.45,x,2.5,z+3.3);box(.45,5.0,7.1,x,5.0,z)}
+   label('🚪 '+text,new THREE.Vector3(x,3.65,z),1.75);
+ };
+ portal(-16,7,'x','ห้องขุดค้น'); portal(0,7,'x','ห้องแผนที่'); portal(16,7,'x','ห้องหลักฐาน');
+ portal(16,-7,'x','ห้องวิเคราะห์'); portal(0,-7,'x','ห้องเครื่องปั้น'); portal(-16,-7,'x','ห้องนักสืบ');
+ // landmark ของแต่ละห้อง
+ // Excavation
+ box(7.5,.65,5.8,0x8b6748,-16,.35,16); box(6.4,.3,4.7,0x65452e,-16,.88,16); box(5.4,.25,3.7,0x9c6d42,-16,1.2,16);
+ for(let i=0;i<5;i++){box(1.0,.7,1.0,0x9b7654,-18+i*1.0,1.55,16+(i%2)*.6)}
+ label('⛏️ หลุมขุดค้นขนาดใหญ่',new THREE.Vector3(-16,3.8,16),2.6);
+ // Map
+ box(8,.35,5,0x4f86a8,0,.35,16); box(7.3,.18,4.3,0x6da4be,0,.58,16);
+ for(let x=-3;x<=3;x+=1.5)cyl(.12,.4,0xffd166,x,.8,16); label('🗺️ แผนที่ประเทศไทย 3D',new THREE.Vector3(0,3.7,16),2.6);
+ // Evidence
+ box(7.5,.5,5.5,0x8b6748,16,.3,16); cyl(1.4,2.8,0xc8b49b,16,1.8,16); cyl(.9,2.2,0x8b6b4e,16,1.8,16); label('🏺 ตู้หลักฐานและวัตถุโบราณ',new THREE.Vector3(16,4.0,16),2.5);
+ // Analysis
+ box(8,.4,5,0x334b68,16,.35,-14); for(let x=13;x<=19;x+=2)cyl(.38,.8,0x7cc7d9,x,1.0,-14); box(4,.35,2.4,0x4d3a2b,16,.75,-11); label('🔬 ห้องวิเคราะห์หลักฐาน',new THREE.Vector3(16,4.0,-14),2.5);
+ // Pottery
+ cyl(3.0,3.6,0xa95039,0,1.9,-16); cyl(2.45,4.0,0x743428,0,2.0,-16); cyl(1.3,1.8,0xffa94d,0,3.0,-16); label('🔥 เตาเผาโบราณ',new THREE.Vector3(0,4.6,-16),2.7);
+ // Detective
+ box(8,.35,.45,0x5a3d2a,-16,3,-16); for(let i=0;i<7;i++){box(.75,.7,.18,0xffd166,-18.6+i*.85,2.1,-15.75)}; box(7,.3,2.6,0x6b472f,-16,.35,-11.5); label('🕵️ กระดานเชื่อมโยงหลักฐาน',new THREE.Vector3(-16,4.0,-14),2.5);
+ // ของตกแต่ง/ตู้ย่อยรอบทางเดิน
+ for(const x of [-21,-11,11,21]) for(const z of [-3,3]) {box(1.4,1.5,1.1,0x7d5b3f,x,.75,z);cyl(.42,.75,0xb66b45,x,1.9,z);}
+ // เส้นทางนำสายตา (ใช้เป็น landmark ไม่ใช่ระบบบังคับเดิน)
+ const pts=[[0,24],[0,18],[0,12],[0,7],[0,0],[-6,0],[-12,0],[-16,7],[0,0],[6,0],[12,0],[16,7],[0,0],[0,-7],[0,-12],[0,-18],[0,-24],[-6,0],[-12,0],[-16,-7]];
+ pts.forEach((p,i)=>addFoot(p[0],.05,p[1],i));
+ // เบาะแสกระจายตามห้องจริง ไม่กองอยู่แนวเดียว
+ addClue(-20,1.4,16,1,'⛏️','ชั้นดินและร่องรอย');
+ addClue(0,1.4,20,2,'🗺️','แผนที่บอกช่วงเวลา');
+ addClue(20,1.4,16,3,'🧩','เศษชิ้นส่วนปริศนา');
+ addClue(20,1.4,-16,4,'🔥','ร่องรอยจากดินและไฟ');
+ addClue(0,1.4,-20,5,'🏺','รูปทรงภาชนะ');
+ addClue(-20,1.4,-16,6,'3️⃣','สามส่วนที่ซ่อนอยู่');
+ addClue(-13,1.4,-18,7,'🏺','หลักฐานจากแหล่งโบราณคดี');
+ addClue(-20,1.4,-11.5,8,'📂','แฟ้มนักโบราณคดี');
+}
+
+function addFoot(x,y,z,i){
+ let g=new THREE.Group();
+ g.position.set(x,y,z);
+ g.userData.target=new THREE.Vector3(x,1,z);
+ // วงเรืองแสงเป็นพื้นที่กดขนาดใหญ่ เหมาะกับ iPad
+ let glow=new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,.08,24),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xffa000,emissiveIntensity:2.1,transparent:true,opacity:.9}));
+ glow.userData.walkNode=true; g.add(glow);
+ let f1=new THREE.Mesh(new THREE.BoxGeometry(.22,.10,.46),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1.5}));
+ let f2=f1.clone(); f1.position.set(-.13,.07,-.12); f2.position.set(.13,.07,.12); f1.rotation.y=-.12; f2.rotation.y=-.12; g.add(f1,f2);
+ root.add(g);walkables.push(g);
+}
+function addClue(x,y,z,n,icon,name){let g=new THREE.Group();g.position.set(x,y,z);g.userData={clue:n,name};let base=box(.9,.18,.9,0x8b6b4e,0,0,0,g);let orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.42,1),new THREE.MeshStandardMaterial({color:0x72d6ff,emissive:0x1476a6,emissiveIntensity:1.5}));orb.position.y=.55;g.add(orb);let s=label(icon,new THREE.Vector3(0,1.35,0),1.25);s.userData.parentClue=g;root.remove(s);g.add(s);let ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.05,10,30),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xff9f00,emissiveIntensity:1.5}));ring.rotation.x=Math.PI/2;ring.position.y=.2;g.add(ring);root.add(g);clueObjects.push(g)}
+// clue data and tools
+const data=[
+['ร่องรอยที่อยู่ใต้ผืนดิน','นักโบราณคดีพบวัตถุจากการขุดค้นในชั้นดินของแหล่งโบราณคดี วัตถุเป็นสิ่งที่หลงเหลือจากผู้คนในอดีต.',['แปรงขุดค้น','แผนที่','เตาเผา'],'แปรงขุดค้น'],
+['แผนที่บอกช่วงเวลา','หลักฐานประเภทเดียวกันถูกพบในแหล่งโบราณคดีหลายแห่งของประเทศไทย และสัมพันธ์กับชุมชนก่อนประวัติศาสตร์.',['แผนที่','แว่นขยาย','ค้อนนักโบราณคดี'],'แผนที่'],
+['เศษชิ้นส่วนปริศนา','นักโบราณคดีรวบรวมชิ้นส่วนจากการขุดค้น แล้วพิจารณารูปร่างและลักษณะเพื่อศึกษาว่าเดิมเป็นสิ่งของอะไร.',['ถาดประกอบชิ้นส่วน','แผนที่','เตาเผา'],'ถาดประกอบชิ้นส่วน'],
+['ร่องรอยจากดินและไฟ','วัสดุสามารถนำมาขึ้นรูปเป็นภาชนะ ตากให้แห้ง และเผาด้วยความร้อนจนแข็งตัว.',['เตาเผา','แว่นขยาย','แผนที่'],'เตาเผ'],
+['รูปทรงที่ยังมองไม่ครบ','บริเวณใต้ตัวภาชนะมีส่วนยื่นออกมาจากตัวภาชนะเพื่อช่วยรองรับน้ำหนัก.',['แว่นขยาย','แผนที่','แปรงขุดค้น'],'แว่นขยาย'],
+['สามส่วนที่ซ่อนอยู่','ส่วนที่ยื่นออกมาจากตัวภาชนะไม่ได้มีเพียงหนึ่งหรือสองส่วน แต่มีจำนวนเท่ากันรอบตัวภาชนะ.',['แว่นขยาย','ไม้บรรทัด','แผนที่'],'ไม้บรรทัด'],
+['หลักฐานจากแหล่งโบราณคดี','พบภาชนะดินเผารูปแบบหนึ่งที่มีส่วนรองรับ 3 ส่วน เรียกว่า “ภาชนะสามขา” และพบในแหล่งโบราณคดีก่อนประวัติศาสตร์หลายแห่ง.',['แฟ้มโบราณคดี','เตาเผา','แผนที่'],'แฟ้มโบราณคดี'],
+['แฟ้มลับจากนักโบราณคดี','หลักฐานที่ตามหาเป็นภาชนะดินเผาจากชุมชนก่อนประวัติศาสตร์ มีลักษณะคล้ายอ่าง และมีขาอ้วนเตี้ยสำหรับรองรับตัวภาชนะ.',['แฟ้มโบราณคดี','แว่นขยาย','เครื่องมือขุดค้น'],'แฟ้มโบราณคดี']];
+
+function setPhase(n){for(let i=1;i<=4;i++){let e=document.getElementById('p'+i);if(!e)continue;e.classList.toggle('active',i===n);e.classList.toggle('done',i<n)}}
+function stopAutoWalk(){}
+function beginDirection(dir){if(!gameStarted||clueModal.style.display==='flex')return;stopAutoWalk();heldDir=dir;status.textContent=dir==='up'?'🚶 เดินหน้า':dir==='down'?'🚶 ถอยหลัง':dir==='left'?'🚶 เดินซ้าย':'🚶 เดินขวา'}
+function endDirection(dir){if(heldDir===dir)heldDir=null}
+Object.entries(dirButtons).forEach(([dir,b])=>{
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);beginDirection(dir)});
+  b.addEventListener('pointerup',e=>{e.preventDefault();endDirection(dir)});
+  b.addEventListener('pointercancel',e=>{e.preventDefault();endDirection(dir)});
+  b.addEventListener('pointerleave',e=>{if(e.buttons===0)endDirection(dir)});
+});
+centerBtn.addEventListener('pointerdown',e=>{e.preventDefault();if(!gameStarted||clueModal.style.display==='flex'||toolChoice.style.display==='flex'||!thinkModal.classList.contains('hidden')||!boardModal.classList.contains('hidden'))return;if(!nearbyClue){status.textContent='🔎 เดินเข้าใกล้เบาะแสก่อน แล้วจึงกดปุ่ม 🧰';return}openToolChoice(nearbyClue);});
+let nearbyClue=null;
+function showToolModel(name,clueObj){if(activeToolModel){root.remove(activeToolModel);activeToolModel=null}let g=new THREE.Group();const target=clueObj?clueObj.position:playerPos;g.position.set(target.x,target.y+1.0,target.z+1.0);let t=label(`${toolEmoji(name)} ${name}`,new THREE.Vector3(0,.2,0),1.8);g.add(t);root.add(g);activeToolModel=g;}
+function toolEmoji(t){return ({'แปรงขุดค้น':'🖌️','แผนที่':'🗺️','เตาเผา':'🔥','ถาดประกอบชิ้นส่วน':'🧩','แว่นขยาย':'🔎','ไม้บรรทัด':'📏','แฟ้มโบราณคดี':'📁','ค้อนนักโบราณคดี':'⛏️','เครื่องมือขุดค้น':'🪓'})[t]||'🧰'}
+function openToolChoice(clue){if(!clue)return;selectedClue=clue.userData.clue;selectedTool=null;toolChoiceNo.textContent=`🔎 เบาะแสที่ ${String(selectedClue).padStart(2,'0')}`;toolChoiceMsg.textContent='แตะเครื่องมือที่คิดว่าเหมาะสม';toolPreview.style.display='none';toolPreview.textContent='';armToolBtn.classList.add('hidden');toolChoiceGrid.innerHTML='';data[selectedClue-1][2].forEach(t=>{let b=document.createElement('button');b.className='toolPick';b.innerHTML=`<div style="font-size:32px;margin-bottom:6px">${toolEmoji(t)}</div>${t}`;b.onclick=()=>{document.querySelectorAll('.toolPick').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedTool=t;toolPreview.style.display='block';toolPreview.textContent=`${toolEmoji(t)} ${t}`;toolChoiceMsg.textContent='เลือกแล้ว — กด “นำไอเท็มไปตรวจสอบ”';armToolBtn.classList.remove('hidden')};toolChoiceGrid.appendChild(b)});toolChoice.style.display='flex';}
+armToolBtn.onclick=()=>{if(!selectedTool||selectedClue===null)return;armedTool=selectedTool;showToolModel(armedTool,nearbyClue);toolChoice.style.display='none';toolPreview.style.display='none';setPhase(2);status.textContent=`${toolEmoji(armedTool)} ${armedTool} พร้อมใช้ — แตะเบาะแสเพื่อใช้เครื่องมือ`;centerBtn.classList.remove('ready');};
+cancelToolBtn.onclick=()=>{toolChoice.style.display='none';selectedClue=null;selectedTool=null;status.textContent='🎮 ใช้ปุ่ม 4 ทิศทางเพื่อสำรวจพิพิธภัณฑ์'};
+function openClue(n){if(found.has(n)||working)return;selectedClue=n-1;selectedTool=armedTool;working=false;clueNo.textContent=`🔎 เบาะแสที่ ${String(n).padStart(2,'0')}`;clueTitle.textContent=data[n-1][0];clueText.textContent='';toolStage.classList.remove('hidden');toolsEl.innerHTML=`<div style="padding:12px 14px;border-radius:14px;background:#fff2c7;border:2px solid #ffcf63;font-weight:950">🧰 ${armedTool||'ไอเท็ม'}</div>`;toolMsg.textContent='แตะ “ตรวจสอบเบาะแส” เพื่อทดลองใช้เครื่องมือ';useClueBtn.classList.remove('hidden');collectBtn.classList.add('hidden');closeBtn.classList.add('hidden');clueModal.style.display='flex';useClueBtn.textContent=`🧰 ใช้ ${armedTool||'ไอเท็ม'} กับเบาะแส`}
+useClueBtn.onclick=()=>{if(selectedClue===null||!armedTool){toolMsg.textContent='⚠️ ยังไม่ได้เลือกไอเท็ม';return}let correct=data[selectedClue][3];if(armedTool!==correct){toolMsg.textContent='❌ ไอเท็มนี้ไม่เหมาะกับเบาะแสนี้ — ให้กลุ่มถัดไปมาลองคิด';working=true;setTimeout(()=>{clueModal.style.display='none';working=false;armedTool=null;if(activeToolModel){root.remove(activeToolModel);activeToolModel=null}status.textContent='👥 ให้กลุ่มถัดไปเลือกเครื่องมือสำหรับเบาะแสนี้';},900);return}working=true;toolMsg.textContent='✨ เครื่องมือกำลังทำงาน...';setTimeout(()=>{clueText.textContent=data[selectedClue][1];useClueBtn.classList.add('hidden');collectBtn.classList.remove('hidden');working=false;setPhase(2);status.textContent='📖 อ่านเบาะแสให้ครบ แล้วกดเก็บเข้ากระเป๋า';},700)};
+collectBtn.onclick=()=>{if(selectedClue===null)return;if(activeToolModel){root.remove(activeToolModel);activeToolModel=null}found.add(selectedClue+1);armedTool=null;let o=clueObjects.find(x=>x.userData.clue===selectedClue+1);if(o)o.visible=false;countEl.textContent=found.size;bag.classList.remove('hidden');bagText.textContent=`เก็บแล้ว ${found.size} ชิ้น • ${[...found].sort((a,b)=>a-b).map(n=>'เบาะแส '+n).join(' • ')}`;collectBtn.classList.add('hidden');closeBtn.classList.remove('hidden');closeBtn.textContent=found.size===8?'ไปวิเคราะห์หลักฐาน 🧠':(found.size===3||found.size===5?'หยุดคิดและตั้งข้อสันนิษฐาน 🧠':'กลับไปสำรวจ 🎮');if(found.size===8)setPhase(4);else if(found.size>=3)setPhase(3);status.textContent=found.size===8?'🎉 เก็บเบาะแสครบ 8 ชิ้นแล้ว — เตรียมสรุปหลักฐาน':'🎒 เก็บเบาะแสเข้ากระเป๋าแล้ว';};
+closeBtn.onclick=()=>{clueModal.style.display='none';selectedClue=null;selectedTool=null;if(found.size===8){status.textContent='🎉 ครบ 8 เบาะแส — เตรียมวิเคราะห์';setTimeout(showFinal,250)}else if(found.size===3||found.size===5){status.textContent='🧠 ถึงจุดหยุดคิดของนักสืบ';setTimeout(()=>showThink(found.size),220)}else{status.textContent='🎮 ใช้ปุ่ม 4 ทิศทางเพื่อสำรวจพิพิธภัณฑ์'}};
+startBtn.onclick=()=>{start.classList.add('hidden');gameStarted=true;setPhase(1);status.textContent='🎮 ใช้ปุ่ม 4 ทิศทางเพื่อเริ่มสำรวจ'};
+world.addEventListener('pointerdown',e=>{
+  if(!gameStarted||clueModal.style.display==='flex'||toolChoice.style.display==='flex'||!thinkModal.classList.contains('hidden')||!boardModal.classList.contains('hidden')||finalModal.classList.contains('hidden')===false||revealModal.classList.contains('hidden')===false)return;
+  cameraDragging=true; cameraMoved=false; cameraStartX=cameraLastX=e.clientX; cameraStartY=cameraLastY=e.clientY;
+  world.setPointerCapture?.(e.pointerId);
+});
+world.addEventListener('pointermove',e=>{
+  if(!cameraDragging)return;
+  const dx=e.clientX-cameraLastX, dy=e.clientY-cameraLastY;
+  if(Math.abs(e.clientX-cameraStartX)+Math.abs(e.clientY-cameraStartY)>8)cameraMoved=true;
+  viewYaw += dx*CAMERA_SENS;
+  viewPitch = THREE.MathUtils.clamp(viewPitch + dy*CAMERA_PITCH_SENS, CAMERA_MIN_PITCH, CAMERA_MAX_PITCH);
+  cameraLastX=e.clientX; cameraLastY=e.clientY;
+  if(cameraMoved)status.textContent='👆 ลากนิ้วเพื่อหมุนมุมกล้องสำรวจรอบห้อง';
+});
+world.addEventListener('pointerup',e=>{
+  if(!cameraDragging)return;
+  const wasMoved=cameraMoved; cameraDragging=false;
+  if(wasMoved)return;
+  let r=world.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  let mouse=new THREE.Vector2(x/r.width*2-1,-(y/r.height)*2+1),ray=new THREE.Raycaster();ray.setFromCamera(mouse,camera);
+  let hits=ray.intersectObjects(clueObjects,true); if(!hits.length)return;
+  let o=hits[0].object;while(o.parent&&!clueObjects.includes(o))o=o.parent;
+  if(clueObjects.includes(o)){
+    let dist=playerPos.distanceTo(new THREE.Vector3(o.position.x,1,o.position.z));
+    if(dist>3.2){status.textContent='🔎 เดินเข้าใกล้เบาะแสก่อน แล้วกด 🧰';return}
+    nearbyClue=o;
+    if(armedTool){openClue(o.userData.clue);status.textContent=`🧰 ใช้ ${armedTool} กับเบาะแสแล้ว`;}
+    else{status.textContent='🧰 พบเบาะแสแล้ว — กดปุ่มกลางเพื่อเลือกไอเท็ม';}
+  }
+});
+world.addEventListener('pointercancel',()=>{cameraDragging=false;cameraMoved=false;});
+movePad.addEventListener('pointerdown',e=>e.stopPropagation());
+function inRect(x,z,x1,x2,z1,z2,pad=.65){return x>=x1+pad&&x<=x2-pad&&z>=z1+pad&&z<=z2-pad}
+function isWalkable(x,z){
+ // พื้นที่เปิดกว้าง: โถงกลาง + ทางเดินเชื่อม + ห้องทั้ง 6
+ return (
+   inRect(x,z,-10.2,10.2,-8.2,8.2) ||
+   inRect(x,z,-8.2,8.2,-25.5,-8.0) || inRect(x,z,-8.2,8.2,8.0,25.5) ||
+   inRect(x,z,-25.5,-8.0,-8.2,8.2) || inRect(x,z,8.0,25.5,-8.2,8.2) ||
+   inRect(x,z,-24.0,-8.0,8.0,24.5) ||
+   inRect(x,z,-8.0,8.0,8.0,25.0) ||
+   inRect(x,z,8.0,24.0,8.0,24.5) ||
+   inRect(x,z,8.0,24.0,-24.5,-8.0) ||
+   inRect(x,z,-8.0,8.0,-25.0,-8.0) ||
+   inRect(x,z,-24.0,-8.0,-24.5,-8.0)
+ );
+}
+
+buildMuseum();playerModel=buildPlayer();playerModel.position.copy(playerPos);playerModel.rotation.y=cameraYaw;camera.position.set(0,4.6,29.0);camera.lookAt(0,1.45,21.0);loading.classList.add('hidden');start.classList.remove('hidden');animate();
+</script></body></html>
