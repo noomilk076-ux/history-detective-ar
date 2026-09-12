@@ -200,8 +200,8 @@ function animate(){requestAnimationFrame(animate);let now=performance.now();let 
  if(gameStarted&&clueModal.style.display!=='flex'&&heldDir){
    // Camera-relative movement: เดินสัมพันธ์กับมุมกล้อง
    const step=MOVE_SPEED*dt;
-   const forwardX=Math.sin(viewYaw), forwardZ=-Math.cos(viewYaw);
-   const rightX=Math.cos(viewYaw), rightZ=Math.sin(viewYaw);
+   const forwardX=-Math.sin(viewYaw), forwardZ=-Math.cos(viewYaw);
+   const rightX=Math.cos(viewYaw), rightZ=-Math.sin(viewYaw);
    let dx=0,dz=0;
    if(heldDir==='up'){dx=forwardX*step;dz=forwardZ*step;}
    else if(heldDir==='down'){dx=-forwardX*step;dz=-forwardZ*step;}
