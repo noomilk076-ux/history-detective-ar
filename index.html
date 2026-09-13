@@ -62,7 +62,542 @@
 .clueReadBox{margin-top:10px;padding:12px 14px;border-radius:15px;background:#fffdf7;border:2px solid #e5d5ae;text-align:left;line-height:1.55}
 .clueReadBox b{color:#7a5320}
 .toolExplain{font-size:13px;line-height:1.45;color:#4b5563;margin-top:6px}
-</style></head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.13</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
+</style>
+<style id="prototype714-reveal-style">
+/* =========================================================
+   Prototype 7.14 — Final Reveal structure
+   Keep gameplay/rooms/movement from 7.13 unchanged.
+   This section redesigns only the final answer screen.
+   ========================================================= */
+
+#revealModal{
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,218,112,.20), transparent 34%),
+    linear-gradient(180deg, rgba(4,10,20,.96), rgba(8,13,22,.985));
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  padding:12px;
+  align-items:flex-start!important;
+  overflow:auto!important;
+}
+
+#revealModal.hidden{display:none!important}
+
+.reveal14{
+  width:min(1240px,98vw);
+  margin:10px auto 22px;
+  color:#241b12;
+  border:3px solid #dcae45;
+  border-radius:30px;
+  overflow:hidden;
+  position:relative;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,239,179,.75), transparent 28%),
+    linear-gradient(145deg,#fffdf6 0%,#f7ecd5 48%,#fffaf0 100%);
+  box-shadow:0 28px 100px rgba(0,0,0,.70), inset 0 0 0 1px rgba(255,255,255,.75);
+}
+
+.reveal14:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 0 5%,rgba(198,143,47,.08) 5.2%,transparent 5.5% 94.5%,rgba(198,143,47,.08) 94.8%,transparent 95%),
+    radial-gradient(circle at 15% 15%,rgba(255,255,255,.9),transparent 20%),
+    radial-gradient(circle at 86% 12%,rgba(255,255,255,.8),transparent 18%);
+}
+
+.reveal14Top{
+  position:relative;
+  z-index:1;
+  text-align:center;
+  padding:18px 20px 12px;
+  border-bottom:1px solid #dec17b;
+}
+
+.reveal14Museum{
+  display:inline-block;
+  padding:7px 16px;
+  border-radius:999px;
+  background:#fff3c9;
+  border:2px solid #dfb44f;
+  color:#74501b;
+  font-size:clamp(13px,2vw,17px);
+  font-weight:950;
+  box-shadow:0 5px 18px rgba(181,126,30,.15);
+}
+
+.reveal14Kicker{
+  margin-top:8px;
+  color:#9a7336;
+  font-weight:900;
+  font-size:13px;
+  letter-spacing:.3px;
+}
+
+.reveal14Top h1{
+  margin:2px 0 0;
+  color:#4b3316;
+  font-size:clamp(30px,5.2vw,56px);
+  line-height:1.05;
+  font-weight:1000;
+  text-shadow:0 3px 0 #fff,0 7px 18px rgba(117,78,19,.16);
+}
+
+.reveal14Top p{
+  margin:7px auto 0;
+  max-width:850px;
+  color:#69543a;
+  font-size:clamp(15px,2.2vw,20px);
+  font-weight:850;
+  line-height:1.45;
+}
+
+.reveal14Feedback{
+  position:relative;
+  z-index:2;
+  width:min(850px,92%);
+  min-height:0;
+  margin:10px auto 0;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#eaf8ee;
+  border:2px solid #9bd1a5;
+  color:#245d31;
+  text-align:center;
+  font-weight:950;
+  box-shadow:0 8px 24px rgba(57,133,75,.10);
+}
+
+.reveal14Feedback:empty{display:none}
+
+.reveal14Main{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(220px,.86fr) minmax(310px,1.28fr) minmax(220px,.86fr);
+  gap:12px;
+  align-items:stretch;
+  padding:12px 16px 8px;
+}
+
+.reveal14Column{
+  display:grid;
+  grid-template-rows:repeat(3,1fr);
+  gap:10px;
+}
+
+.reveal14InfoCard{
+  position:relative;
+  min-height:112px;
+  padding:13px 14px 12px 52px;
+  border-radius:19px;
+  background:rgba(255,253,246,.94);
+  border:2px solid #e4d1a5;
+  box-shadow:0 8px 22px rgba(94,65,24,.10);
+  overflow:hidden;
+}
+
+.reveal14InfoCard:after{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:6px;
+  background:#c9993f;
+}
+
+.reveal14Gold:after{background:#d6a735}
+.reveal14Blue:after{background:#6d9fd0}
+.reveal14Green:after{background:#78aa75}
+
+.reveal14Icon{
+  position:absolute;
+  left:12px;
+  top:13px;
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  font-size:24px;
+}
+
+.reveal14Label{
+  color:#956625;
+  font-size:13px;
+  font-weight:1000;
+  margin-bottom:4px;
+}
+
+.reveal14Value{
+  color:#392d20;
+  font-size:clamp(16px,2vw,21px);
+  font-weight:950;
+  line-height:1.25;
+}
+
+.reveal14Value span{
+  font-size:.86em;
+  color:#6d5637;
+}
+
+.reveal14Value.small{
+  font-size:clamp(14px,1.65vw,17px);
+  line-height:1.4;
+}
+
+.reveal14Artifact{
+  min-height:392px;
+  position:relative;
+  border-radius:24px;
+  overflow:hidden;
+  border:3px solid #d9ae4d;
+  background:
+    radial-gradient(circle at 50% 32%,#fff7b7 0,#d09a4e 14%,#5c4028 35%,#1b1b1c 70%,#0c1018 100%);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.65),0 14px 35px rgba(69,44,16,.20);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.reveal14Glow{
+  position:absolute;
+  width:360px;height:360px;
+  left:50%;top:44%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,235,135,.55),rgba(255,209,75,.12) 35%,transparent 68%);
+  filter:blur(3px);
+  animation:reveal14Pulse 2.2s ease-in-out infinite;
+}
+
+.reveal14Beam{
+  position:absolute;
+  top:-25px;left:50%;
+  width:210px;height:430px;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,rgba(255,245,184,.22),rgba(255,248,201,.60),rgba(255,245,184,.22),transparent);
+  clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);
+  filter:blur(2px);
+  opacity:.8;
+}
+
+.reveal14Pedestal{
+  position:absolute;
+  bottom:47px;
+  left:50%;
+  width:230px;height:62px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse at 50% 18%,#f1cf7a,#a8742d 46%,#56371e 100%);
+  box-shadow:0 20px 24px rgba(0,0,0,.55),inset 0 5px 9px rgba(255,245,191,.45);
+}
+
+.reveal14Pedestal:before{
+  content:"";
+  position:absolute;
+  left:22px;right:22px;bottom:30px;height:90px;
+  border-radius:12px 12px 5px 5px;
+  background:linear-gradient(90deg,#6c4726,#bd8741 48%,#714921);
+  box-shadow:inset 0 8px 12px rgba(255,225,147,.25);
+}
+
+.reveal14Pot{
+  z-index:3;
+  width:245px!important;
+  height:245px!important;
+  transform:scale(1.28) perspective(560px) rotateX(-8deg)!important;
+  margin-top:-32px;
+}
+
+.reveal14Pot .potBody{
+  left:35px!important;top:52px!important;width:174px!important;height:120px!important;
+}
+.reveal14Pot .potRim{
+  left:24px!important;top:38px!important;width:196px!important;height:37px!important;
+}
+.reveal14Pot .potLeg{
+  top:151px!important;width:43px!important;height:77px!important;
+}
+.reveal14Pot .leg1{left:40px!important}
+.reveal14Pot .leg2{left:101px!important}
+.reveal14Pot .leg3{right:40px!important}
+
+.reveal14ArtifactTag{
+  position:absolute;
+  left:50%;bottom:17px;
+  transform:translateX(-50%);
+  z-index:5;
+  white-space:nowrap;
+  padding:6px 13px;
+  border-radius:999px;
+  background:rgba(255,248,213,.94);
+  color:#694814;
+  border:2px solid #dfb44f;
+  font-weight:950;
+  font-size:13px;
+}
+
+.reveal14ArtifactName{
+  position:absolute;
+  left:50%;bottom:83px;
+  transform:translateX(-50%);
+  z-index:5;
+  color:#fff1b3;
+  font-weight:1000;
+  font-size:clamp(22px,3vw,32px);
+  text-shadow:0 4px 15px #000;
+  white-space:nowrap;
+}
+
+.reveal14ArtifactSub{
+  position:absolute;
+  left:50%;bottom:60px;
+  transform:translateX(-50%);
+  z-index:5;
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+  opacity:.9;
+  white-space:nowrap;
+}
+
+.reveal14Compare{
+  position:relative;
+  z-index:1;
+  margin:5px 16px 10px;
+  padding:11px 13px 13px;
+  border-radius:19px;
+  background:linear-gradient(135deg,#f3f7ff,#fffaf0);
+  border:2px solid #c7d7eb;
+}
+
+.reveal14CompareTitle{
+  text-align:center;
+  color:#4b5f7b;
+  font-weight:1000;
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+.reveal14CompareRow{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:10px;
+}
+
+.reveal14Guess,.reveal14Answer{
+  padding:10px 13px;
+  border-radius:14px;
+  min-height:60px;
+  background:#eef2f7;
+  border:2px solid #d5dde8;
+}
+
+.reveal14Answer{
+  background:#fff3c8;
+  border-color:#dfb44f;
+}
+
+.reveal14Guess span,.reveal14Answer span{
+  display:block;
+  color:#657187;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:3px;
+}
+
+.reveal14Guess strong,.reveal14Answer strong{
+  display:block;
+  color:#27354a;
+  font-size:clamp(14px,1.9vw,18px);
+  line-height:1.25;
+}
+
+.reveal14Answer strong{color:#684617}
+
+.reveal14Arrow{
+  color:#bd8226;
+  font-size:29px;
+  font-weight:1000;
+}
+
+.reveal14Thinking{
+  position:relative;
+  z-index:1;
+  margin:0 16px 10px;
+  padding:11px 12px 12px;
+  border-radius:18px;
+  background:#fffaf0;
+  border:2px solid #e4d1a5;
+}
+
+.reveal14ThinkingTitle{
+  text-align:center;
+  color:#73532a;
+  font-size:14px;
+  font-weight:1000;
+  margin-bottom:8px;
+}
+
+.reveal14Steps{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.reveal14Steps div{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#f1f3f6;
+  color:#4e5b6d;
+  font-weight:900;
+  font-size:12px;
+}
+
+.reveal14Steps div b{
+  width:22px;height:22px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#d8e0ea;
+  color:#405064;
+}
+
+.reveal14Steps div.active{
+  background:#fff0b4;
+  border:2px solid #dfb44f;
+  color:#694713;
+}
+
+.reveal14Steps div.active b{
+  background:#dcae45;
+  color:#fff;
+}
+
+.reveal14Steps i{
+  color:#c18b35;
+  font-style:normal;
+  font-weight:1000;
+}
+
+.reveal14Success{
+  position:relative;
+  z-index:1;
+  margin:0 16px 9px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  border-radius:19px;
+  background:linear-gradient(135deg,#fff0ad,#ffe08a,#fff1bd);
+  border:3px solid #d9a82e;
+  box-shadow:0 8px 28px rgba(218,169,47,.22);
+  text-align:left;
+}
+
+.reveal14Trophy{font-size:40px;line-height:1}
+
+.reveal14Success strong{
+  display:block;
+  color:#62420f;
+  font-size:clamp(20px,3vw,28px);
+  font-weight:1000;
+}
+
+.reveal14Success span{
+  display:block;
+  color:#725522;
+  font-size:14px;
+  font-weight:850;
+  line-height:1.35;
+}
+
+.reveal14Quote{
+  position:relative;
+  z-index:1;
+  margin:0 16px 10px;
+  padding:10px 14px;
+  border-radius:15px;
+  background:#eef5ff;
+  border:2px solid #c4d7ee;
+  color:#36506d;
+  text-align:center;
+  font-size:13px;
+  font-weight:850;
+  line-height:1.45;
+}
+
+.reveal14Finish{
+  position:relative;
+  z-index:2;
+  display:block;
+  margin:0 auto 16px;
+  min-width:260px;
+  font-size:18px!important;
+  padding:13px 22px!important;
+  box-shadow:0 10px 30px rgba(186,133,39,.28)!important;
+}
+
+@keyframes reveal14Pulse{
+  0%,100%{transform:translate(-50%,-50%) scale(.96);opacity:.72}
+  50%{transform:translate(-50%,-50%) scale(1.04);opacity:1}
+}
+
+@media(max-width:900px){
+  .reveal14Main{
+    grid-template-columns:1fr 1.2fr 1fr;
+  }
+  .reveal14InfoCard{padding-left:45px}
+  .reveal14Artifact{min-height:350px}
+  .reveal14Pot{transform:scale(1.05) perspective(520px) rotateX(-8deg)!important}
+}
+
+@media(max-width:700px){
+  #revealModal{padding:7px}
+  .reveal14{border-radius:22px}
+  .reveal14Main{
+    grid-template-columns:1fr;
+    padding:10px;
+  }
+  .reveal14Artifact{
+    order:-1;
+    min-height:350px;
+  }
+  .reveal14Column{
+    grid-template-columns:1fr;
+    grid-template-rows:none;
+  }
+  .reveal14InfoCard{min-height:94px}
+  .reveal14Compare,.reveal14Thinking,.reveal14Success,.reveal14Quote{margin-left:10px;margin-right:10px}
+  .reveal14CompareRow{grid-template-columns:1fr}
+  .reveal14Arrow{transform:rotate(90deg);text-align:center;height:20px}
+  .reveal14Success{align-items:flex-start}
+  .reveal14ArtifactName{bottom:78px}
+  .reveal14ArtifactSub{bottom:55px}
+  .reveal14Steps{justify-content:flex-start}
+  .reveal14Steps i{display:none}
+}
+
+@media(max-width:430px){
+  .reveal14Top{padding:14px 12px 10px}
+  .reveal14Artifact{min-height:320px}
+  .reveal14Pot{transform:scale(.92) perspective(500px) rotateX(-8deg)!important}
+  .reveal14ArtifactTag{font-size:11px}
+  .reveal14ArtifactSub{font-size:10px}
+  .reveal14Value{font-size:16px}
+  .reveal14Value.small{font-size:14px}
+}
+</style>
+
+</head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.14.1</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="toolChoice"><div class="investigateStep"><span class="on">① พบเบาะแส</span><span>② เลือกเครื่องมือ</span><span>③ ตรวจสอบ</span><span>④ อ่านและเก็บ</span></div><div class="card"><div id="toolChoiceNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="toolChoiceTitle">🧰 เลือกเครื่องมือสำหรับตรวจสอบ</h2><p id="toolChoiceHint">เลือกเครื่องมือที่คิดว่าเหมาะสม แล้วเครื่องมือจะปรากฏอยู่หน้าเบาะแส</p><div id="toolPreview" style="display:none;margin:12px 0;padding:12px 16px;border-radius:16px;background:linear-gradient(135deg,#fff8dc,#f4ead1);border:2px solid #e7c36b;text-align:center;font-size:24px;font-weight:950;color:#513b1f"></div><div class="toolGrid" id="toolChoiceGrid"></div><div class="actionNote" id="toolChoiceMsg"></div><button class="btn hidden" id="armToolBtn">🧰 นำไอเท็มไปตรวจสอบ</button><button class="btn" id="cancelToolBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="thinkModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🔎</div><h1 id="thinkTitle" style="font-size:clamp(28px,6vw,46px)">หยุดคิดแบบนักสืบ</h1><div class="learnNote">💡 นักสืบที่ดีไม่รีบตอบ แต่ใช้ข้อมูลที่พบมา “ตั้งข้อสันนิษฐาน” และพร้อมปรับเมื่อมีเบาะแสใหม่</div><div class="thinkQuestion" id="thinkQuestion"></div><div class="chain" id="thinkChain"></div><div class="thinkGrid" id="thinkGrid"></div><div id="thinkMsg" style="font-weight:900;min-height:30px"></div><button class="btn hidden" id="thinkContinueBtn">➡️ ไปค้นหาเบาะแสต่อ</button></div></div>
 <div id="journeyModal"><div class="journeyCard">
@@ -81,42 +616,127 @@
 </div></div><div id="finalApproachHint" class="finalApproachHint">✨ ห้องแสดงหลักฐานอยู่ด้านหน้า<br>🚶 ใช้ปุ่ม 4 ทิศทาง เดินเข้าใกล้ตู้ที่กำลังเรืองแสง แล้วแตะตู้เพื่อเปิดเฉลย</div>
 <div id="finalModal" class="screen hidden"><div class="card"><div style="font-size:48px">🎒🔎</div><h1 style="font-size:clamp(28px,6vw,46px)">ภารกิจสุดท้าย: สร้างคำตอบจากหลักฐาน</h1><p>นักสืบไม่ควรเลือกคำตอบจากการเดา — ต้องมี <b>ข้อมูลที่สนับสนุน</b> และอธิบายได้ว่าเหตุใดข้อมูลนั้นจึงเกี่ยวข้อง</p><div class="finalSummary">🎯 <b>ภารกิจสุดท้าย</b><br>เลือกเบาะแสอย่างน้อย 3 ชิ้น → บอกว่าแต่ละชิ้นช่วยเราเรื่องอะไร → เชื่อมโยงเป็นเหตุผล → จึงเลือกข้อสันนิษฐาน</div><div class="learnNote">🧠 กติกา: เลือกเบาะแสที่กลุ่มคิดว่า “สนับสนุนคำตอบ” อย่างน้อย <b>3 ชิ้น</b> แล้วอธิบายความเชื่อมโยง ก่อนเลือกคำตอบ</div><h2>1️⃣ เลือกหลักฐานสนับสนุนอย่างน้อย 3 ชิ้น</h2><div class="supportCount" id="supportCount">เลือกแล้ว 0 / 3 ชิ้น</div><div class="supportGrid" id="supportGrid"></div><div class="reasonPrompt">💬 ลองพูดให้เพื่อนฟัง: “เราเลือกหลักฐานเหล่านี้ เพราะ...”</div><div class="reasonChoices" id="reasonChoices"><button class="reasonChoice" data-reason="บริบทและช่วงเวลา">🕰️ บอกบริบท/ช่วงเวลา</button><button class="reasonChoice" data-reason="วัสดุและการผลิต">🏺 บอกวัสดุ/การผลิต</button><button class="reasonChoice" data-reason="รูปร่างและลักษณะ">🔎 บอกรูปร่าง/ลักษณะ</button><button class="reasonChoice" data-reason="แหล่งที่พบ">📍 บอกแหล่งที่พบ</button></div><div id="supportMsg" style="font-weight:900;min-height:28px"></div><h2>2️⃣ เลือกข้อสันนิษฐานของกลุ่ม</h2><div class="candidateGrid" id="candidateGrid"></div><div id="candidateMsg" style="font-weight:900;min-height:28px"></div><button class="btn hidden" id="boardBtn">🧠 เปิดกระดานเชื่อมโยงหลักฐาน</button><button class="btn reveal hidden" id="teacherRevealBtn">✨ เฉลยหลักฐานที่ตามหา</button></div></div>
 <div id="boardModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🕵️</div><h1 style="font-size:clamp(28px,6vw,46px)">กระดานสืบสวนหลักฐาน</h1><p>ลองเชื่อมโยงข้อมูลจาก 8 เบาะแส ก่อนตัดสินใจเลือกคำตอบ</p><div class="boardStep"><b>1</b><div><strong>แหล่งที่พบ</strong><br>ขุดพบในชั้นดินของแหล่งโบราณคดี → เป็นร่องรอยจากอดีต</div></div><div class="boardStep"><b>2</b><div><strong>ช่วงเวลาและบริบท</strong><br>สัมพันธ์กับชุมชนก่อนประวัติศาสตร์</div></div><div class="boardStep"><b>3</b><div><strong>วัสดุและการผลิต</strong><br>เป็นภาชนะดินเผา → ขึ้นรูป ตากแห้ง และเผา</div></div><div class="boardStep"><b>4</b><div><strong>รูปร่าง</strong><br>มีส่วนยื่นรองรับน้ำหนัก และมีจำนวน 3 ส่วน</div></div><div class="reasonBox">🎯 สรุปจากการเชื่อมโยง: เรากำลังมองหาหลักฐานประเภท “ภาชนะดินเผาสามขา” มากขึ้นเรื่อย ๆ</div><div class="evidenceList" id="boardEvidenceList"></div><div class="thinkQuestion">💬 คำถามสำหรับกลุ่ม: “เบาะแสใดช่วยให้เราเปลี่ยนจากการคาดเดา มาเป็นข้อสันนิษฐานที่มีเหตุผลมากขึ้น?”</div><button class="btn" id="closeBoardBtn">กลับไปเลือกคำตอบ 🎯</button></div></div>
-<div id="revealModal" class="screen hidden"><div class="card revealModalCinematic">
-  <div style="font-weight:950;color:#9a6b20;text-align:center">🏛️ ห้องแสดงหลักฐานแห่งอดีต</div>
-  <div class="revealTitle">✨ เปิดหลักฐานแห่งอดีต ✨</div>
-  <div class="revealSub">คำตอบที่ตามหาจากเบาะแสทั้ง 8 ชิ้น ปรากฏต่อหน้ากลุ่มนักสืบ</div>
-  <div class="answerCompare">
-    <div><small>ข้อสันนิษฐานของกลุ่ม</small><strong id="groupAnswer">—</strong></div>
-    <div class="arrow">→</div>
-    <div class="correctAnswer"><small>คำตอบจากหลักฐาน</small><strong>🏺 ภาชนะดินเผาสามขา / หม้อสามขา</strong></div>
+<div id="revealModal" class="screen hidden">
+  <div class="reveal14">
+    <div class="reveal14Top">
+      <div class="reveal14Museum">🏛️ พิพิธภัณฑ์หลักฐานแห่งอดีต</div>
+      <div class="reveal14Kicker">ภารกิจนักสืบประวัติศาสตร์ • ผลการสืบสวน</div>
+      <h1>✨ เปิดหลักฐานแห่งอดีต ✨</h1>
+      <p>คำตอบที่ตามหาจากเบาะแสทั้ง ๘ ชิ้น ปรากฏต่อหน้ากลุ่มนักสืบแล้ว!</p>
+    </div>
+
+    <div id="revealFeedback" class="reveal14Feedback"></div>
+
+    <div class="reveal14Main">
+      <section class="reveal14Column reveal14Left">
+        <div class="reveal14InfoCard reveal14Gold">
+          <div class="reveal14Icon">🔎</div>
+          <div class="reveal14Label">ชื่อหลักฐาน</div>
+          <div class="reveal14Value">ภาชนะดินเผาสามขา<br><span>/ หม้อสามขา</span></div>
+        </div>
+
+        <div class="reveal14InfoCard">
+          <div class="reveal14Icon">🕰️</div>
+          <div class="reveal14Label">ยุคสมัย</div>
+          <div class="reveal14Value">สมัยก่อนประวัติศาสตร์</div>
+        </div>
+
+        <div class="reveal14InfoCard">
+          <div class="reveal14Icon">📍</div>
+          <div class="reveal14Label">วิธีการพบ</div>
+          <div class="reveal14Value small">พบจากการขุดค้นในแหล่งโบราณคดีและชั้นวัฒนธรรม</div>
+        </div>
+      </section>
+
+      <section class="reveal14Artifact">
+        <div class="reveal14Glow"></div>
+        <div class="reveal14Beam"></div>
+        <div class="reveal14Pedestal"></div>
+        <div class="tripodPot3D reveal14Pot">
+          <div class="potBody"></div>
+          <div class="potRim"></div>
+          <div class="potLeg leg1"></div>
+          <div class="potLeg leg2"></div>
+          <div class="potLeg leg3"></div>
+        </div>
+        <div class="reveal14ArtifactTag">🏺 หลักฐานที่ตามหา</div>
+        <div class="reveal14ArtifactName">หม้อสามขา</div>
+        <div class="reveal14ArtifactSub">หลักฐานชิ้นสำคัญจากชุมชนก่อนประวัติศาสตร์</div>
+      </section>
+
+      <section class="reveal14Column reveal14Right">
+        <div class="reveal14InfoCard reveal14Blue">
+          <div class="reveal14Icon">🦵</div>
+          <div class="reveal14Label">ลักษณะเด่น</div>
+          <div class="reveal14Value small">ภาชนะทรงคล้ายอ่าง มีขาอ้วนเตี้ย ๓ ส่วนรองรับตัวภาชนะ</div>
+        </div>
+
+        <div class="reveal14InfoCard">
+          <div class="reveal14Icon">🏺</div>
+          <div class="reveal14Label">ความสำคัญทางประวัติศาสตร์</div>
+          <div class="reveal14Value small">ช่วยศึกษาฝีมือการทำเครื่องปั้นและวิถีชีวิตของชุมชนก่อนประวัติศาสตร์</div>
+        </div>
+
+        <div class="reveal14InfoCard reveal14Green">
+          <div class="reveal14Icon">🌱</div>
+          <div class="reveal14Label">ความเชื่อมโยงกับปัจจุบัน</div>
+          <div class="reveal14Value small">เชื่อมโยงกับการผลิตเครื่องปั้น งานหัตถกรรม และการศึกษาหลักฐานทางโบราณคดี</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="reveal14Compare">
+      <div class="reveal14CompareTitle">🎯 จากข้อสันนิษฐานของกลุ่ม → สู่คำตอบจากหลักฐาน</div>
+      <div class="reveal14CompareRow">
+        <div class="reveal14Guess">
+          <span>ข้อสันนิษฐานของกลุ่ม</span>
+          <strong id="groupAnswer">—</strong>
+        </div>
+        <div class="reveal14Arrow">➜</div>
+        <div class="reveal14Answer">
+          <span>คำตอบที่ยืนยันจากเบาะแส</span>
+          <strong>🏺 ภาชนะดินเผาสามขา / หม้อสามขา</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal14Thinking">
+      <div class="reveal14ThinkingTitle">🧠 เส้นทางการคิดของนักสืบประวัติศาสตร์</div>
+      <div class="reveal14Steps">
+        <div><b>๑</b><span>อ่านเบาะแส</span></div>
+        <i>→</i>
+        <div><b>๒</b><span>ตีความ</span></div>
+        <i>→</i>
+        <div><b>๓</b><span>เชื่อมโยง</span></div>
+        <i>→</i>
+        <div><b>๔</b><span>ปรับข้อสันนิษฐาน</span></div>
+        <i>→</i>
+        <div class="active"><b>๕</b><span>สรุปคำตอบ</span></div>
+      </div>
+    </div>
+
+    <div class="reveal14Success">
+      <div class="reveal14Trophy">🏆</div>
+      <div>
+        <strong>ภารกิจสำเร็จ!</strong>
+        <span>พวกเราช่วยกันไขปริศนาหลักฐานจากอดีต โดยใช้เบาะแสและเหตุผล</span>
+      </div>
+    </div>
+
+    <div class="reveal14Quote">💬 นักสืบประวัติศาสตร์ไม่ได้ตอบเพราะ “เดาเก่ง” แต่ตอบได้เพราะรู้จักอ่านเบาะแส เชื่อมโยงข้อมูล และใช้หลักฐานอย่างมีเหตุผล</div>
+
+    <button class="btn reveal14Finish" id="finishBtn">🏆 จบภารกิจนักสืบ</button>
   </div>
-  <div id="revealFeedback" class="revealCelebrate"></div>
-  <div class="revealHero">
-    <div class="beam"></div>
-    <div class="tripodPot3D"><div class="potBody"></div><div class="potRim"></div><div class="potLeg leg1"></div><div class="potLeg leg2"></div><div class="potLeg leg3"></div></div>
-  </div>
-  <div style="text-align:center;font-weight:950;color:#8b5e2f;font-size:20px">🏺 หม้อสามขา — หลักฐานชิ้นสำคัญที่เราไขปริศนาร่วมกัน</div>
-  <div class="revealInfoGrid">
-    <div class="revealInfo"><b>🔎 ชื่อหลักฐาน</b>ภาชนะดินเผาสามขา / หม้อสามขา</div>
-    <div class="revealInfo"><b>🕰️ ยุคสมัย</b>สมัยก่อนประวัติศาสตร์</div>
-    <div class="revealInfo"><b>📍 วิธีการพบ</b>พบจากการขุดค้นในแหล่งโบราณคดีและชั้นวัฒนธรรม</div>
-    <div class="revealInfo"><b>🦵 ลักษณะเด่น: ทำไมต้องสามขา?</b>เป็นภาชนะทรงคล้ายอ่าง มีขาอ้วนเตี้ย 3 ส่วนรองรับตัวภาชนะ</div>
-    <div class="revealInfo"><b>🏺 ความสำคัญทางประวัติศาสตร์</b>ช่วยศึกษาฝีมือการทำเครื่องปั้นและวิถีชีวิตของชุมชนก่อนประวัติศาสตร์</div>
-    <div class="revealInfo"><b>🌱 ความเชื่อมโยงกับปัจจุบัน</b>เชื่อมโยงกับการผลิตเครื่องปั้น งานหัตถกรรม และการศึกษาหลักฐานทางโบราณคดีในปัจจุบัน</div>
-  </div>
-  <div class="finalQuote">💬 <b>นักสืบประวัติศาสตร์ไม่ได้ตอบเพราะ “เดาเก่ง”</b><br>แต่ตอบได้เพราะรู้จักอ่านเบาะแส เชื่อมโยงข้อมูล และใช้หลักฐานอย่างมีเหตุผล</div>
-  <div class="missionComplete"><div class="big">🏆🎉🔎</div><b style="font-size:24px">ภารกิจสำเร็จ!</b><br>พวกเราช่วยกันไขปริศนาหลักฐานจากอดีตได้แล้ว</div>
-  <button class="btn" id="finishBtn">🏆 จบภารกิจนักสืบ</button>
-</div></div>
+</div>
 <script type="module">
-const world=document.getElementById('world'),loading=document.getElementById('loading'),start=document.getElementById('start'),startBtn=document.getElementById('startBtn'),status=document.getElementById('status');
+const world=document.getElementById('world'),loading=document.getElementById('loading'),start=document.getElementById('start'),startBtn=document.getElementById('startBtn'),status=document.getElementById('status'),learningToast=document.getElementById('learningToast'),teacherPause=document.getElementById('teacherPause'),teacherHelp=document.getElementById('teacherHelp');
 const countEl=document.getElementById('count'),bag=document.getElementById('bag'),bagText=document.getElementById('bagText');
 const movePad=document.getElementById('movePad'),dirButtons={up:document.getElementById('up'),left:document.getElementById('left'),right:document.getElementById('right'),down:document.getElementById('down')},centerBtn=document.getElementById('center');
 const clueModal=document.getElementById('clueModal'),clueNo=document.getElementById('clueNo'),clueTitle=document.getElementById('clueTitle'),clueText=document.getElementById('clueText'),toolStage=document.getElementById('toolStage'),toolsEl=document.getElementById('tools'),toolMsg=document.getElementById('toolMsg'),useClueBtn=document.getElementById('useClueBtn'),collectBtn=document.getElementById('collectBtn'),closeBtn=document.getElementById('closeBtn');
 const supportGrid=document.getElementById('supportGrid'),supportCount=document.getElementById('supportCount'),supportMsg=document.getElementById('supportMsg'),reasonChoices=document.getElementById('reasonChoices');
 const groupAnswer=document.getElementById('groupAnswer'),revealFeedback=document.getElementById('revealFeedback');
-const toolChoice=document.getElementById('toolChoice'),toolChoiceNo=document.getElementById('toolChoiceNo'),toolChoiceTitle=document.getElementById('toolChoiceTitle'),toolChoiceGrid=document.getElementById('toolChoiceGrid'),toolChoiceMsg=document.getElementById('toolChoiceMsg'),toolPreview=document.getElementById('toolPreview'),armToolBtn=document.getElementById('armToolBtn'),cancelToolBtn=document.getElementById('cancelToolBtn'),finalModal=document.getElementById('finalModal'),evidenceList=document.getElementById('evidenceList'),candidateGrid=document.getElementById('candidateGrid'),candidateMsg=document.getElementById('candidateMsg'),teacherRevealBtn=document.getElementById('teacherRevealBtn'),revealModal=document.getElementById('revealModal'),finishBtn=document.getElementById('finishBtn'),thinkModal=document.getElementById('thinkModal'),thinkTitle=document.getElementById('thinkTitle'),thinkQuestion=document.getElementById('thinkQuestion'),thinkChain=document.getElementById('thinkChain'),thinkGrid=document.getElementById('thinkGrid'),thinkMsg=document.getElementById('thinkMsg'),thinkContinueBtn=document.getElementById('thinkContinueBtn'),boardModal=document.getElementById('boardModal'),boardBtn=document.getElementById('boardBtn'),boardEvidenceList=document.getElementById('boardEvidenceList'),closeBoardBtn=document.getElementById('closeBoardBtn'),
-journeyModal=document.getElementById('journeyModal'),walkRevealBtn=document.getElementById('walkRevealBtn'),
+const toolChoice=document.getElementById('toolChoice'),toolChoiceNo=document.getElementById('toolChoiceNo'),toolChoiceTitle=document.getElementById('toolChoiceTitle'),toolChoiceGrid=document.getElementById('toolChoiceGrid'),toolChoiceMsg=document.getElementById('toolChoiceMsg'),toolPreview=document.getElementById('toolPreview'),armToolBtn=document.getElementById('armToolBtn'),cancelToolBtn=document.getElementById('cancelToolBtn'),finalModal=document.getElementById('finalModal'),candidateGrid=document.getElementById('candidateGrid'),candidateMsg=document.getElementById('candidateMsg'),teacherRevealBtn=document.getElementById('teacherRevealBtn'),revealModal=document.getElementById('revealModal'),finishBtn=document.getElementById('finishBtn'),thinkModal=document.getElementById('thinkModal'),thinkTitle=document.getElementById('thinkTitle'),thinkQuestion=document.getElementById('thinkQuestion'),thinkChain=document.getElementById('thinkChain'),thinkGrid=document.getElementById('thinkGrid'),thinkMsg=document.getElementById('thinkMsg'),thinkContinueBtn=document.getElementById('thinkContinueBtn'),boardModal=document.getElementById('boardModal'),boardBtn=document.getElementById('boardBtn'),boardEvidenceList=document.getElementById('boardEvidenceList'),closeBoardBtn=document.getElementById('closeBoardBtn');
+const journeyModal=document.getElementById('journeyModal'),walkRevealBtn=document.getElementById('walkRevealBtn'),
 finalApproachHint=document.getElementById('finalApproachHint'),cabinetReadyBadge=document.getElementById('cabinetReadyBadge');
 const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
 let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog=new THREE.Fog(0x9ec4d8,28,58);
