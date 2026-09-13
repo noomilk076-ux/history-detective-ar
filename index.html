@@ -2064,9 +2064,8 @@ function cabinet82(x,z,w=4.8){
   const g=new THREE.Group();g.position.set(x,0,z);root.add(g);box(w,2.6,.65,0x6b442f,0,1.65,0,g);box(w-.35,1.9,.08,0x7ccff1,0,1.65,-.36,g).material=glowMat82(0x7ccff1,.35,.20);box(w+.18,.18,.82,0xd7ad58,0,3.02,0,g);for(let i=0;i<3;i++)pot82(-w/2+1+i*1.25,2.0,.02,.36,0xb36b42,true,g);return g;
 }
 function decorateAdvanced82(){
-  // GRAND ATRIUM — layered architectural silhouette, upper gallery rails, banners and lanterns
-  for(const [x,z] of [[-30,-30],[-15,-30],[15,-30],[30,-30],[-30,30],[-15,30],[15,30],[30,30]]) pillar82(x,z,7.4,0xc1aa83);
-  rail82(-21,28,17,0);rail82(21,28,17,0);rail82(-21,-28,17,Math.PI);rail82(21,-28,17,Math.PI);
+  // GRAND ATRIUM — เสาหลักชั้นเดียวแบบโปร่ง ไม่มีราวชั้นสอง
+  for(const [x,z] of [[-30,-30],[0,-30],[30,-30],[-30,30],[0,30],[30,30],[-30,0],[30,0]]) pillar82(x,z,7.4,0xc1aa83);
   for(let x=-24;x<=24;x+=8){lantern82(x,6.9,-31,.82);lantern82(x,6.9,31,.82)}
   banner82(-15,5.7,19.0,4.4,4.4,0x8f2730,0xe6b05c,'อดีต\nส่องทาง');
   banner82(15,5.7,19.0,4.4,4.4,0x20558c,0xe6b05c,'หลักฐาน\nเล่าเรื่อง');
@@ -2104,18 +2103,85 @@ function decorateAdvanced82(){
   lantern82(10,2.0,-25.4,.52,0xffc65a);
 }
 
+
+/* ================================================================
+   8.4 — SINGLE-STORY GLASS DOME / GRAND ATRIUM
+   Clean transparent dome, minimal metal framing, no wooden ceiling beams.
+================================================================ */
+function buildGlassDome84(){
+  const g=new THREE.Group();
+  g.name='GrandGlassDome84';
+  root.add(g);
+  const glassMat=new THREE.MeshPhysicalMaterial({
+    color:0xcfefff, transparent:true, opacity:.18,
+    roughness:.04, metalness:.05, transmission:.32,
+    side:THREE.DoubleSide, depthWrite:false
+  });
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(38,64,28,0,Math.PI*2,0,Math.PI/2),glassMat);
+  dome.scale.y=.37;
+  dome.position.set(0,8.0,0);
+  g.add(dome);
+
+  // ฐานวงแหวนบาง ๆ รอบโดม
+  const baseRing=new THREE.Mesh(new THREE.TorusGeometry(38,.13,10,96),new THREE.MeshStandardMaterial({color:0xd8b66a,metalness:.65,roughness:.28,emissive:0x6b4a18,emissiveIntensity:.25}));
+  baseRing.rotation.x=Math.PI/2; baseRing.position.set(0,8.0,0); g.add(baseRing);
+
+  // โครงโดมแบบบาง: 12 ซี่โลหะสีทอง ไม่ใช่คานไม้
+  for(let i=0;i<12;i++){
+    const a=i*Math.PI*2/12;
+    const curve=new THREE.CatmullRomCurve3([
+      new THREE.Vector3(Math.cos(a)*37.7,8.0,Math.sin(a)*37.7),
+      new THREE.Vector3(Math.cos(a)*28.0,13.0,Math.sin(a)*28.0),
+      new THREE.Vector3(Math.cos(a)*15.0,17.5,Math.sin(a)*15.0),
+      new THREE.Vector3(0,22.05,0)
+    ]);
+    const rib=new THREE.Mesh(new THREE.TubeGeometry(curve,18,.055,6,false),new THREE.MeshStandardMaterial({color:0xe2bf70,metalness:.72,roughness:.25,emissive:0x5d4218,emissiveIntensity:.18}));
+    g.add(rib);
+  }
+  // วงแหวนเส้นบาง 2 ชั้น ให้เห็นรูปทรงโดมชัดจากกล้อง
+  for(const [r,y] of [[30,12.0],[21,15.2],[11,18.2]]){
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(r,.045,8,72),new THREE.MeshStandardMaterial({color:0xdab86b,metalness:.7,roughness:.25}));
+    ring.rotation.x=Math.PI/2;ring.position.y=y;g.add(ring);
+  }
+  // ช่องแสงด้านบน
+  const oculus=new THREE.Mesh(new THREE.CircleGeometry(2.6,48),new THREE.MeshBasicMaterial({color:0xbfeeff,transparent:true,opacity:.24,side:THREE.DoubleSide,depthWrite:false}));
+  oculus.position.set(0,22.0,0);oculus.rotation.x=0;g.add(oculus);
+
+  // แสงธรรมชาติจากโดม
+  const sun=new THREE.PointLight(0xbfe9ff,2.0,42,2);sun.position.set(0,17,0);g.add(sun);
+  const warm=new THREE.PointLight(0xffd27a,2.6,28,2);warm.position.set(0,9,7);g.add(warm);
+}
+
+function buildAtriumArchitecture84(){
+  // กรอบผนังชั้นเดียว: หินอ่อน + ไม้ + ซุ้มทางเข้าที่ชัดเจน
+  const arches=[
+    [-27,15,0xffb24f],[-27,-7,0x5ca9ff],[27,15,0x63d38d],[27,-7,0xa98cff],
+    [-9,-28,0xff8a45],[10,-28,0xb18cff]
+  ];
+  arches.forEach(([x,z,c])=>{
+    const arch=new THREE.Group();arch.position.set(x,0,z);root.add(arch);
+    box(.62,5.8,.72,0xc7b28f,-4.35,2.9,0,arch);box(.62,5.8,.72,0xc7b28f,4.35,2.9,0,arch);
+    box(9.3,.72,.72,0xc7b28f,0,5.55,0,arch);
+    box(8.5,.10,.16,c,0,5.15,-.38,arch);
+  });
+  // แท่นพุ่มไม้ซ้ำเป็นจังหวะเพื่อสร้างความสมมาตรของโถง
+  [[-30,22],[30,22],[-30,4],[30,4],[-19,22],[19,22]].forEach(([x,z])=>plant82(x,z,1.18));
+  // เสากลางโถงเตี้ย ๆ เป็นรายละเอียด ไม่ใช่โครงรับหลังคา
+  [[-18,18],[18,18],[-18,-17],[18,-17]].forEach(([x,z])=>{
+    box(.95,5.8,.95,0xd0bea0,x,2.9,z);box(1.25,.22,1.25,0xd8b66a,x,5.85,z);box(1.25,.20,1.25,0x735039,x,.12,z);
+  });
+}
+
 function buildMuseum(){
   // GRAND MUSEUM 6.8 — โถงกลางเป็นพระเอก ห้องต่าง ๆ อยู่ด้านข้าง/ด้านหลัง
   const B=72;
   box(B,.3,B,0xd8c7aa,0,-.15,0);
   box(B,10,.5,0xeee2cf,0,5,-36); box(.5,10,B,0xeee2cf,-36,5,0); box(.5,10,B,0xeee2cf,36,5,0); box(B,10,.5,0xeee2cf,0,5,36);
   for(let x=-33;x<=33;x+=3){for(let z=-33;z<=33;z+=3) box(2.78,.035,2.78,((Math.round(x/3)+Math.round(z/3))%2===0)?0xf4ead5:0xe7d9bf,x,.02,z);}
-  // เสาและระเบียงชั้นสอง
-  for(let x=-33;x<=33;x+=6){box(.72,8.4,.72,0xb58c62,x,4.2,-32.8);box(.72,8.4,.72,0xb58c62,x,4.2,32.8);}
-  for(let z=-27;z<=27;z+=6){box(.72,8.4,.72,0xb58c62,-32.8,4.2,z);box(.72,8.4,.72,0xb58c62,32.8,4.2,z);}
-  box(66,.28,2.0,0x8f6948,0,7.8,-30.8); box(66,.28,2.0,0x8f6948,0,7.8,30.8);
-  // หลังคา/ช่องแสงเหนือโถง
-  for(let x=-25;x<=25;x+=5) box(.22,4.0,.22,0xb58c62,x,7.1,-2); box(54,.18,.22,0xb58c62,0,9.1,-2);
+  // เสาหลักชั้นเดียวรอบผนัง — ไม่มีระเบียงชั้นสอง
+  for(let x=-33;x<=33;x+=8){box(.72,8.4,.72,0xb58c62,x,4.2,-32.8);box(.72,8.4,.72,0xb58c62,x,4.2,32.8);}
+  for(let z=-24;z<=24;z+=8){box(.72,8.4,.72,0xb58c62,-32.8,4.2,z);box(.72,8.4,.72,0xb58c62,32.8,4.2,z);}
+  // 8.4: เพดานเดิมแบบคานไม้ถูกตัดออก เพื่อเตรียมโดมกระจกใสชั้นเดียว
   // โถงกลางเปิดโล่ง
   box(38,.12,52,0xe5d4ae,0,.08,4);
   cyl(13,.28,0xe7d3a9,0,.18,8); cyl(11.2,.16,0x5c7890,0,.34,8); cyl(9.6,.12,0xe9c86f,0,.44,8);
@@ -2194,7 +2260,6 @@ function buildMuseum(){
   // ชั้นสองเป็น gallery ที่มองเห็นจากโถง — ยังไม่บังคับขึ้นเพื่อความเสถียร
   box(12,.35,3.0,0x8f6948,-24,5.8,24); box(12,.35,3.0,0x8f6948,24,5.8,24); box(12,.35,3.0,0x8f6948,-24,5.8,-20); box(12,.35,3.0,0x8f6948,24,5.8,-20);
   for(let x=-29;x<=-19;x+=2)box(.15,1.0,.15,0xd6b47b,x,6.45,24); for(let x=19;x<=29;x+=2)box(.15,1.0,.15,0xd6b47b,x,6.45,24);
-  label('ชั้นสอง • แกลเลอรีหลักฐาน',new THREE.Vector3(0,8.0,-25),3.0);
   const pts=[[0,31],[0,26],[0,21],[0,16],[0,11],[0,6],[-5,11],[-11,11],[-17,15],[-23,15],[-5,0],[-11,0],[-17,-7],[-23,-7],[5,11],[11,11],[17,15],[23,15],[5,0],[11,0],[17,-7],[23,-7],[0,-5],[0,-15],[-5,-20],[-9,-23],[5,-20],[10,-23]]; pts.forEach((p,i)=>addFoot(p[0],.05,p[1],i));
   addClue(-31,1.4,18,1,'⛏️','ร่องรอยที่อยู่ใต้ผืนดิน');
   addClue(-23,1.4,-2,2,'🗺️','แผนที่บอกช่วงเวลา');
@@ -2804,13 +2869,7 @@ function buildGrandVisual83(){
     vBox(1.0,11,1.0,0x9b7654,-34,5.5,x);vBox(1.0,11,1.0,0x9b7654,34,5.5,x);
     vBox(1.9,.35,1.9,0x6c4933,x,.18,-34);vBox(1.9,.35,1.9,0x6c4933,x,.18,34);
   }
-  // upper balcony rails (high, safely above walking)
-  for(let x=-30;x<=30;x+=3)vBox(2.5,.22,.28,0x70472e,x,7.7,-31.8);
-  for(let x=-30;x<=30;x+=3)vBox(2.5,.22,.28,0x70472e,x,7.7,31.8);
-  for(let x=-30;x<=30;x+=3){vBox(.18,1.0,.18,0xb78a58,x,7.25,-31.8);vBox(.18,1.0,.18,0xb78a58,x,7.25,31.8)}
-  // skylight ribs and center crest
-  for(let x=-24;x<=24;x+=8){vBox(.34,10,.34,0x6f523b,x,8,0);vBox(48,.32,.32,0x6f523b,0,11.2,x/3)}
-  vBox(10,.42,2.0,0x6f472d,0,8.9,0);vBox(8,.22,1.2,0xf0d39a,0,9.25,0);
+  // 8.4: ไม่มีชั้นสองและไม่มีคานไม้ตัดผ่านมุมมองโถง
   label('🏛️ พิพิธภัณฑ์หลักฐานแห่งอดีต',new THREE.Vector3(0,8.2,0),3.0);
   vBanner(-10,34,0x9f2538,'อดีต','ส่องทาง',0);vBanner(10,34,0x1f5a92,'หลักฐาน','เล่าเรื่อง',0);
   // central floor medallion
@@ -2858,6 +2917,8 @@ function buildGrandVisual83(){
 
 buildMuseum();
 buildGrandVisual83();
+buildAtriumArchitecture84();
+buildGlassDome84();
 
 let revealCabinet=null, revealCabinetHit=null, revealCabinetActive=false;
 function buildRevealCabinet(){
