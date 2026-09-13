@@ -62,6 +62,17 @@
 .clueReadBox{margin-top:10px;padding:12px 14px;border-radius:15px;background:#fffdf7;border:2px solid #e5d5ae;text-align:left;line-height:1.55}
 .clueReadBox b{color:#7a5320}
 .toolExplain{font-size:13px;line-height:1.45;color:#4b5563;margin-top:6px}
+
+/* ================= Prototype 8.0 — Living Museum / Mission / Cinematic Finale ================= */
+#missionHud80{position:fixed;top:82px;left:18px;z-index:45;min-width:250px;max-width:310px;padding:10px 13px;border:1px solid rgba(255,255,255,.24);border-radius:16px;background:rgba(15,20,32,.78);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.25);color:#fff;font-family:system-ui,sans-serif;pointer-events:none}
+.m80top{display:flex;justify-content:space-between;gap:12px;font-weight:800;font-size:14px}.m80bar{height:8px;margin:7px 0;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}.m80fill{height:100%;width:0;background:linear-gradient(90deg,#ffd166,#7ee7ff);transition:width .35s}.m80sub{font-size:11px;opacity:.82}
+#roomObjectHint80{position:fixed;left:50%;bottom:108px;transform:translateX(-50%) translateY(12px);z-index:44;opacity:0;transition:.25s;pointer-events:none;padding:11px 17px;border-radius:16px;background:rgba(20,24,35,.88);border:1px solid rgba(255,255,255,.22);color:#fff;text-align:center;font:700 14px system-ui,sans-serif;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+#roomObjectHint80.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#roomInspect80{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(5,8,15,.66);backdrop-filter:blur(6px);padding:18px;font-family:system-ui,sans-serif}.r80card{width:min(760px,94vw);max-height:86vh;overflow:auto;border-radius:24px;padding:22px;background:linear-gradient(145deg,#fff,#f3f6ff);box-shadow:0 25px 80px rgba(0,0,0,.38);color:#202535}.r80icon{font-size:46px}.r80title{font-size:27px;font-weight:900;margin:5px 0 8px}.r80text{font-size:16px;line-height:1.65}.r80q{margin-top:15px;padding:13px 15px;border-radius:15px;background:#fff2c7;border:2px solid #ffd166;font-weight:800}.r80close{margin-top:16px;border:0;border-radius:14px;padding:11px 20px;font-size:16px;font-weight:900;background:#222;color:#fff}
+#scoreBurst80{position:fixed;left:50%;top:34%;z-index:95;transform:translate(-50%,-50%) scale(.7);opacity:0;pointer-events:none;font:900 30px system-ui;color:#fff;text-shadow:0 3px 16px #000;transition:.4s}.scoreShow80{opacity:1!important;transform:translate(-50%,-50%) scale(1.08)!important}
+#missionComplete80{position:fixed;inset:0;z-index:110;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 38%,rgba(255,209,102,.24),rgba(5,8,18,.92) 55%);padding:18px;font-family:system-ui,sans-serif}.m80complete{width:min(820px,95vw);text-align:center;color:#fff;padding:28px;border:1px solid rgba(255,255,255,.22);border-radius:28px;background:rgba(18,23,38,.88);box-shadow:0 30px 100px rgba(0,0,0,.5)}.m80complete h1{font-size:clamp(30px,6vw,58px);margin:4px 0 8px}.m80complete p{font-size:17px;line-height:1.6;opacity:.9}.m80stats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:18px 0}.m80stat{min-width:135px;padding:12px;border-radius:16px;background:rgba(255,255,255,.08)}.m80stat b{display:block;font-size:25px}.m80complete button{border:0;border-radius:16px;padding:13px 24px;font-size:17px;font-weight:900;background:#ffd166;color:#222}
+@media(max-width:700px){#missionHud80{top:74px;left:10px;min-width:210px;max-width:245px;padding:8px 10px}.m80top{font-size:12px}.m80sub{font-size:10px}.r80title{font-size:23px}.r80text{font-size:14px}.r80card{padding:18px}}
+
 </style>
 <style id="prototype714-reveal-style">
 /* =========================================================
@@ -2570,4 +2581,38 @@ function pulseToolMsg720(cls){
 }
 
 
-</script></body></html>
+
+/* ===== 8.0 runtime: living rooms + XP mission layer ===== */
+(function(){
+  const scoreEl=document.getElementById('missionScore80'),fillEl=document.getElementById('missionFill80'),subEl=document.getElementById('missionSub80');
+  const hint=document.getElementById('roomObjectHint80'),inspect=document.getElementById('roomInspect80'),ri=document.getElementById('r80icon'),rt=document.getElementById('r80title'),rx=document.getElementById('r80text'),rq=document.getElementById('r80q'),rc=document.getElementById('r80close');
+  const burst=document.getElementById('scoreBurst80');
+  let xp=0,roomsSeen=new Set(),roomObjects=[],lastRoom80=-1,lastToolXP=0;
+  const roomData=[
+    {id:0,x:-27,z:15,icon:'⛏️',title:'ห้องขุดค้น • อ่านร่องรอยใต้ผืนดิน',text:'ชั้นดินและเศษชิ้นส่วนช่วยให้นักโบราณคดีศึกษาว่าวัตถุถูกพบในบริบทใด และผู้คนในอดีตทิ้งร่องรอยอะไรไว้',q:'ลองคิด: ถ้าพบชิ้นส่วนอยู่ในชั้นดิน เราควรสังเกตอะไรบ้างก่อนสรุปว่าวัตถุนั้นคืออะไร?'},
+    {id:1,x:-27,z:-7,icon:'🗺️',title:'ห้องแผนที่ • มองหาความเชื่อมโยงของแหล่งพบ',text:'การเปรียบเทียบแหล่งโบราณคดีหลายแห่งช่วยให้นักสืบเห็นรูปแบบของหลักฐานและความสัมพันธ์ระหว่างชุมชน',q:'ลองคิด: ถ้าพบหลักฐานรูปแบบเดียวกันหลายพื้นที่ ข้อมูลนี้ช่วยตรวจสอบข้อสันนิษฐานได้อย่างไร?'},
+    {id:2,x:27,z:15,icon:'🏺',title:'ห้องหลักฐาน • สังเกตวัตถุให้ละเอียด',text:'วัตถุโบราณไม่ได้บอกคำตอบด้วยตัวเอง นักสืบต้องสังเกตรูปร่าง วัสดุ และร่องรอยที่ยังเหลืออยู่',q:'ลองคิด: ลักษณะใดของวัตถุที่น่าจะเป็นเบาะแสสำคัญที่สุดในการแยกออกจากหลักฐานชนิดอื่น?'},
+    {id:3,x:27,z:-7,icon:'🔬',title:'ห้องวิเคราะห์ • เปลี่ยนสิ่งที่เห็นเป็นเหตุผล',text:'การวิเคราะห์คือการนำรายละเอียดหลายอย่างมาเชื่อมโยงกัน แล้วตรวจสอบว่าข้อสันนิษฐานเดิมยังสอดคล้องกับหลักฐานหรือไม่',q:'ลองคิด: ถ้าเบาะแสใหม่ไม่ตรงกับข้อสันนิษฐานเดิม นักสืบควรทำอย่างไร?'},
+    {id:4,x:-9,z:-28,icon:'🔥',title:'ห้องเครื่องปั้น • ตามรอยวัสดุและการผลิต',text:'ภาชนะดินเผาทำจากดิน นำมาขึ้นรูป ตากให้แห้ง และเผาด้วยความร้อนจนแข็งตัว',q:'ลองคิด: ถ้าเรารู้วิธีผลิตวัตถุ เราจะใช้ข้อมูลนี้ช่วยระบุหลักฐานได้อย่างไร?'},
+    {id:5,x:10,z:-28,icon:'🕵️',title:'ห้องนักสืบ • เชื่อมหลักฐานก่อนสรุป',text:'ก่อนตอบ นักสืบควรเลือกหลักฐานสนับสนุนอย่างน้อยหลายชิ้น แล้วอธิบายว่าหลักฐานเหล่านั้นเชื่อมโยงกันอย่างไร',q:'ลองคิด: หลักฐานอย่างน้อย 3 ชิ้นของคุณชี้ไปที่คำตอบเดียวกันหรือไม่? เพราะอะไร?'}
+  ];
+  function updateHud80(){const c=typeof found!=='undefined'?found.size:0;const pct=Math.min(100,Math.round(((c/8)+(roomsSeen.size/6))*50));fillEl.style.width=pct+'%';subEl.textContent=`ค้นพบ ${c} / 8 เบาะแส • ห้องสำรวจ ${roomsSeen.size} / 6`;scoreEl.textContent=xp+' XP';}
+  function addXP80(n,label){xp+=n;burst.textContent='+'+n+' XP  '+label;burst.classList.remove('scoreShow80');void burst.offsetWidth;burst.classList.add('scoreShow80');setTimeout(()=>burst.classList.remove('scoreShow80'),800);updateHud80();}
+  function showInspect80(o){ri.textContent=o.icon;rt.textContent=o.title;rx.textContent=o.text;rq.textContent=o.q;inspect.style.display='flex';addXP80(5,'สำรวจรายละเอียด');}
+  rc.onclick=()=>inspect.style.display='none';
+  roomData.forEach(o=>{const g=new THREE.Group();g.position.set(o.x,1.5,o.z);g.userData.room80=o;const ring=new THREE.Mesh(new THREE.TorusGeometry(1.7,.08,10,32),new THREE.MeshStandardMaterial({color:0xffd166,emissive:0xffd166,emissiveIntensity:1.1,transparent:true,opacity:.72}));ring.rotation.x=Math.PI/2;g.add(ring);const hit=new THREE.Mesh(new THREE.SphereGeometry(2.15,16,12),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.userData.room80=o;g.add(hit);root.add(g);roomObjects.push(g)});
+  world.addEventListener('pointerup',function(e){if(cameraDragging||cameraMoved||inspect.style.display==='flex')return;const r=world.getBoundingClientRect();const m=new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);const ray=new THREE.Raycaster();ray.setFromCamera(m,camera);const hits=ray.intersectObjects(roomObjects,true);if(!hits.length)return;const o=hits[0].object.userData.room80||(hits[0].object.parent&&hits[0].object.parent.userData.room80);if(!o)return;const d=Math.hypot(playerPos.x-o.x,playerPos.z-o.z);if(d>7){hint.textContent='🚶 เดินเข้าใกล้จุดสำรวจอีกนิด แล้วแตะอีกครั้ง';hint.classList.add('show');setTimeout(()=>hint.classList.remove('show'),1300);return}showInspect80(o)});
+  const originalUpdateGame=updateGame;
+  updateGame=function(dt){originalUpdateGame(dt);let best=-1,bestD=999;roomData.forEach(o=>{const d=Math.hypot(playerPos.x-o.x,playerPos.z-o.z);if(d<9&&d<bestD){best=o.id;bestD=d}});if(best!==-1&&best!==lastRoom80){lastRoom80=best;if(!roomsSeen.has(best)){roomsSeen.add(best);addXP80(10,'ค้นพบห้องใหม่')}updateHud80()}};
+  if(typeof collectBtn!=='undefined'){const oldCollect=collectBtn.onclick;collectBtn.onclick=function(){const before=found.size;if(oldCollect)oldCollect();setTimeout(()=>{if(found.size>before)addXP80(15,'เก็บเบาะแส');updateHud80()},100)}}
+  if(typeof toolMsg!=='undefined'){const mo=new MutationObserver(()=>{const t=toolMsg.textContent||'';if((t.includes('ถูกต้อง')||t.includes('เก่งมาก'))&&performance.now()-lastToolXP>1200){lastToolXP=performance.now();addXP80(20,'ใช้เครื่องมือถูกต้อง')}});mo.observe(toolMsg,{childList:true,subtree:true,characterData:true})}
+  updateHud80();
+})();
+</script>
+<!-- Prototype 8.0 UI -->
+<div id="missionHud80"><div class="m80top"><span>🕵️ ภารกิจนักสืบ</span><span id="missionScore80">0 XP</span></div><div class="m80bar"><div id="missionFill80" class="m80fill"></div></div><div id="missionSub80" class="m80sub">ค้นพบ 0 / 8 เบาะแส • ห้องสำรวจ 0 / 6</div></div>
+<div id="roomObjectHint80"></div><div id="scoreBurst80"></div>
+<div id="roomInspect80" style="display:none"><div class="r80card"><div id="r80icon" class="r80icon">🔎</div><div id="r80title" class="r80title"></div><div id="r80text" class="r80text"></div><div id="r80q" class="r80q"></div><button id="r80close" class="r80close">เข้าใจแล้ว • กลับไปสำรวจ</button></div></div>
+<div id="missionComplete80"><div class="m80complete"><div style="font-size:52px">🏆✨</div><h1>ภารกิจสำเร็จ!</h1><p>คุณใช้เบาะแส หลักฐาน และเหตุผลเพื่อไขปริศนาทางประวัติศาสตร์</p><div class="m80stats"><div class="m80stat"><b id="mcScore80">0</b>XP</div><div class="m80stat"><b id="mcClues80">8/8</b>เบาะแส</div><div class="m80stat"><b id="mcRooms80">6/6</b>ห้อง</div></div><button id="mcContinue80">ไปสู่เฉลยหลักฐาน 🏺</button></div></div>
+
+</body></html>
