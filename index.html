@@ -874,7 +874,432 @@
 }
 </style>
 
-</head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.15.1</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
+
+<style id="prototype716-board-landscape">
+/* Prototype 7.16 — iPad landscape-first investigation board */
+#boardModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#boardModal>.card{
+  width:min(1180px,96vw)!important;
+  max-width:none!important;
+  max-height:90vh!important;
+  height:auto!important;
+  overflow:auto!important;
+  padding:16px 20px!important;
+  border-radius:24px!important;
+  box-sizing:border-box;
+}
+
+#boardModal>.card>h1{
+  margin:2px 0 4px!important;
+  font-size:clamp(25px,3.6vw,40px)!important;
+}
+
+#boardModal>.card>p{
+  margin:3px 0 10px!important;
+  font-size:14px!important;
+}
+
+#boardModal .boardStep{
+  display:grid!important;
+  grid-template-columns:34px 1fr!important;
+  align-items:center!important;
+  min-height:64px!important;
+  margin:6px 0!important;
+  padding:8px 12px!important;
+  border-radius:13px!important;
+  box-sizing:border-box;
+}
+
+#boardModal .boardStep>b{
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+}
+
+#boardModal .boardStep>div{
+  font-size:13px!important;
+  line-height:1.28!important;
+}
+
+#boardModal .boardStep>div strong{
+  font-size:14px!important;
+}
+
+#boardModal .reasonBox{
+  margin:8px 0!important;
+  padding:9px 12px!important;
+  font-size:13px!important;
+  line-height:1.3!important;
+  border-radius:13px!important;
+}
+
+#boardModal .evidenceList{
+  display:grid!important;
+  grid-template-columns:repeat(3,1fr)!important;
+  gap:6px!important;
+  max-height:none!important;
+  margin:7px 0!important;
+}
+
+#boardModal .evidenceList>*{
+  min-height:46px!important;
+  margin:0!important;
+  padding:7px 9px!important;
+  box-sizing:border-box;
+  font-size:11px!important;
+  line-height:1.25!important;
+  border-radius:10px!important;
+}
+
+#boardModal .thinkQuestion{
+  margin:7px 0!important;
+  padding:8px 11px!important;
+  font-size:12px!important;
+  line-height:1.3!important;
+  border-radius:11px!important;
+}
+
+#boardModal #closeBoardBtn{
+  display:block!important;
+  margin:8px auto 0!important;
+  padding:9px 20px!important;
+  font-size:14px!important;
+}
+
+/* Four reasoning blocks stay on one horizontal row. */
+@media(min-width:701px){
+  #boardModal .boardSteps{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+    align-items:stretch;
+  }
+  #boardModal .boardSteps .boardStep{
+    margin:0!important;
+    min-height:112px!important;
+    align-content:center;
+  }
+}
+
+/* Portrait iPad: still use a horizontal information composition,
+   but compress to 2 columns so it does not become a tall scrolling page. */
+@media(max-width:700px){
+  #boardModal>.card{
+    width:97vw!important;
+    max-height:94vh!important;
+    padding:10px 12px!important;
+    border-radius:18px!important;
+  }
+
+  #boardModal>.card>div:first-child{
+    font-size:34px!important;
+  }
+
+  #boardModal>.card>h1{
+    font-size:24px!important;
+  }
+
+  #boardModal>.card>p{
+    font-size:11px!important;
+    margin-bottom:7px!important;
+  }
+
+  #boardModal .boardStep{
+    min-height:58px!important;
+    padding:6px 8px!important;
+  }
+
+  #boardModal .boardStep>div{
+    font-size:11px!important;
+  }
+
+  #boardModal .boardStep>div strong{
+    font-size:12px!important;
+  }
+
+  #boardModal .evidenceList{
+    grid-template-columns:repeat(2,1fr)!important;
+  }
+}
+
+@media(max-height:650px){
+  #boardModal>.card{
+    max-height:94vh!important;
+    padding:7px 12px!important;
+  }
+  #boardModal>.card>div:first-child{font-size:28px!important}
+  #boardModal>.card>h1{font-size:23px!important}
+  #boardModal>.card>p{display:none}
+  #boardModal .boardStep{min-height:48px!important}
+  #boardModal .thinkQuestion{margin:4px 0!important}
+}
+</style>
+
+
+<style id="prototype717-clean-ipad-layout">
+/* ================================================================
+   PROTOTYPE 7.17
+   Clean + iPad Layout
+   - Landscape-first modal system
+   - Compact information density
+   - No giant portrait web-page cards
+   - Gameplay logic intentionally untouched
+   ================================================================ */
+
+:root{
+  --modal-w:min(1240px,96vw);
+  --modal-h:min(90vh,740px);
+}
+
+/* Common modal shell */
+.screen>.card{
+  box-sizing:border-box;
+}
+
+/* Evidence/clue reading modal */
+#clueModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#clueModal>.card{
+  width:min(980px,94vw)!important;
+  max-width:none!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  box-sizing:border-box;
+  border-radius:22px!important;
+}
+
+/* Tool selection */
+#toolModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#toolModal>.card{
+  width:min(900px,94vw)!important;
+  max-width:none!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  box-sizing:border-box;
+}
+
+/* Think/pause modal */
+#thinkModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#thinkModal>.card{
+  width:min(850px,92vw)!important;
+  max-width:none!important;
+  max-height:86vh!important;
+  overflow:auto!important;
+}
+
+/* Journey-to-reveal modal */
+#journeyModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#journeyModal>.card{
+  width:min(850px,92vw)!important;
+  max-width:none!important;
+  max-height:86vh!important;
+  overflow:auto!important;
+}
+
+/* Final candidate/reasoning modal */
+#finalModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#finalModal>.final15{
+  width:min(1240px,96vw)!important;
+  max-width:none!important;
+  max-height:90vh!important;
+  box-sizing:border-box;
+}
+
+/* Investigation board */
+#boardModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+
+#boardModal>.card{
+  width:min(1180px,96vw)!important;
+  max-width:none!important;
+  max-height:90vh!important;
+  box-sizing:border-box;
+  overflow:auto!important;
+}
+
+/* Reveal screen */
+#revealModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px!important;
+  overflow:auto!important;
+}
+
+#revealModal>.reveal14{
+  width:min(1240px,96vw)!important;
+  max-width:none!important;
+  max-height:92vh!important;
+  box-sizing:border-box;
+}
+
+/* ----------------------------------------------------------------
+   Landscape: use the full horizontal canvas.
+   ---------------------------------------------------------------- */
+@media (orientation:landscape){
+  #clueModal>.card,
+  #toolModal>.card,
+  #thinkModal>.card,
+  #journeyModal>.card{
+    max-height:84vh!important;
+  }
+
+  #boardModal>.card,
+  #finalModal>.final15{
+    max-height:88vh!important;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Portrait iPad:
+   Do NOT turn everything into a tall single-column webpage.
+   Keep important choices in compact grids.
+   ---------------------------------------------------------------- */
+@media (min-width:701px) and (orientation:portrait){
+  #clueModal>.card{
+    width:88vw!important;
+    max-height:84vh!important;
+  }
+
+  #toolModal>.card{
+    width:88vw!important;
+    max-height:84vh!important;
+  }
+
+  #thinkModal>.card,
+  #journeyModal>.card{
+    width:82vw!important;
+    max-height:80vh!important;
+  }
+
+  #boardModal>.card{
+    width:92vw!important;
+    max-height:86vh!important;
+  }
+
+  #finalModal>.final15{
+    width:92vw!important;
+    max-height:88vh!important;
+  }
+}
+
+/* ----------------------------------------------------------------
+   Small screens / narrow iPad webview
+   ---------------------------------------------------------------- */
+@media(max-width:700px){
+  #clueModal,
+  #toolModal,
+  #thinkModal,
+  #journeyModal,
+  #boardModal,
+  #finalModal,
+  #revealModal{
+    padding:4px!important;
+  }
+
+  #clueModal>.card{
+    width:96vw!important;
+    max-height:92vh!important;
+    border-radius:17px!important;
+  }
+
+  #toolModal>.card{
+    width:96vw!important;
+    max-height:92vh!important;
+    border-radius:17px!important;
+  }
+
+  #thinkModal>.card,
+  #journeyModal>.card{
+    width:94vw!important;
+    max-height:90vh!important;
+    border-radius:17px!important;
+  }
+
+  #boardModal>.card{
+    width:97vw!important;
+    max-height:94vh!important;
+    border-radius:17px!important;
+  }
+
+  #finalModal>.final15{
+    width:97vw!important;
+    max-height:94vh!important;
+    border-radius:18px!important;
+  }
+
+  #revealModal>.reveal14{
+    width:97vw!important;
+    max-height:94vh!important;
+    border-radius:18px!important;
+  }
+}
+
+/* Prevent accidental horizontal overflow from long Thai text. */
+#clueModal .card,
+#toolModal .card,
+#thinkModal .card,
+#journeyModal .card,
+#boardModal .card,
+#finalModal .final15,
+#revealModal .reveal14{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+/* Make all modal buttons comfortable on touch screens. */
+#clueModal button,
+#toolModal button,
+#thinkModal button,
+#journeyModal button,
+#boardModal button,
+#finalModal button,
+#revealModal button{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+</style>
+
+</head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.17.1</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="toolChoice"><div class="investigateStep"><span class="on">① พบเบาะแส</span><span>② เลือกเครื่องมือ</span><span>③ ตรวจสอบ</span><span>④ อ่านและเก็บ</span></div><div class="card"><div id="toolChoiceNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="toolChoiceTitle">🧰 เลือกเครื่องมือสำหรับตรวจสอบ</h2><p id="toolChoiceHint">เลือกเครื่องมือที่คิดว่าเหมาะสม แล้วเครื่องมือจะปรากฏอยู่หน้าเบาะแส</p><div id="toolPreview" style="display:none;margin:12px 0;padding:12px 16px;border-radius:16px;background:linear-gradient(135deg,#fff8dc,#f4ead1);border:2px solid #e7c36b;text-align:center;font-size:24px;font-weight:950;color:#513b1f"></div><div class="toolGrid" id="toolChoiceGrid"></div><div class="actionNote" id="toolChoiceMsg"></div><button class="btn hidden" id="armToolBtn">🧰 นำไอเท็มไปตรวจสอบ</button><button class="btn" id="cancelToolBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="thinkModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🔎</div><h1 id="thinkTitle" style="font-size:clamp(28px,6vw,46px)">หยุดคิดแบบนักสืบ</h1><div class="learnNote">💡 นักสืบที่ดีไม่รีบตอบ แต่ใช้ข้อมูลที่พบมา “ตั้งข้อสันนิษฐาน” และพร้อมปรับเมื่อมีเบาะแสใหม่</div><div class="thinkQuestion" id="thinkQuestion"></div><div class="chain" id="thinkChain"></div><div class="thinkGrid" id="thinkGrid"></div><div id="thinkMsg" style="font-weight:900;min-height:30px"></div><button class="btn hidden" id="thinkContinueBtn">➡️ ไปค้นหาเบาะแสต่อ</button></div></div>
 <div id="journeyModal"><div class="journeyCard">
@@ -949,7 +1374,7 @@
     </section>
   </div>
 </div>
-<div id="boardModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🕵️</div><h1 style="font-size:clamp(28px,6vw,46px)">กระดานสืบสวนหลักฐาน</h1><p>ลองเชื่อมโยงข้อมูลจาก 8 เบาะแส ก่อนตัดสินใจเลือกคำตอบ</p><div class="boardStep"><b>1</b><div><strong>แหล่งที่พบ</strong><br>ขุดพบในชั้นดินของแหล่งโบราณคดี → เป็นร่องรอยจากอดีต</div></div><div class="boardStep"><b>2</b><div><strong>ช่วงเวลาและบริบท</strong><br>สัมพันธ์กับชุมชนก่อนประวัติศาสตร์</div></div><div class="boardStep"><b>3</b><div><strong>วัสดุและการผลิต</strong><br>เป็นภาชนะดินเผา → ขึ้นรูป ตากแห้ง และเผา</div></div><div class="boardStep"><b>4</b><div><strong>รูปร่าง</strong><br>มีส่วนยื่นรองรับน้ำหนัก และมีจำนวน 3 ส่วน</div></div><div class="reasonBox">🎯 สรุปจากการเชื่อมโยง: เรากำลังมองหาหลักฐานประเภท “ภาชนะดินเผาสามขา” มากขึ้นเรื่อย ๆ</div><div class="evidenceList" id="boardEvidenceList"></div><div class="thinkQuestion">💬 คำถามสำหรับกลุ่ม: “เบาะแสใดช่วยให้เราเปลี่ยนจากการคาดเดา มาเป็นข้อสันนิษฐานที่มีเหตุผลมากขึ้น?”</div><button class="btn" id="closeBoardBtn">กลับไปเลือกคำตอบ 🎯</button></div></div>
+<div id="boardModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🕵️</div><h1 style="font-size:clamp(28px,6vw,46px)">กระดานสืบสวนหลักฐาน</h1><p>ลองเชื่อมโยงข้อมูลจาก 8 เบาะแส ก่อนตัดสินใจเลือกคำตอบ</p><div class="boardSteps"><div class="boardStep"><b>1</b><div><strong>แหล่งที่พบ</strong><br>ขุดพบในชั้นดินของแหล่งโบราณคดี → เป็นร่องรอยจากอดีต</div></div><div class="boardStep"><b>2</b><div><strong>ช่วงเวลาและบริบท</strong><br>สัมพันธ์กับชุมชนก่อนประวัติศาสตร์</div></div><div class="boardStep"><b>3</b><div><strong>วัสดุและการผลิต</strong><br>เป็นภาชนะดินเผา → ขึ้นรูป ตากแห้ง และเผา</div></div><div class="boardStep"><b>4</b><div><strong>รูปร่าง</strong><br>มีส่วนยื่นรองรับน้ำหนัก และมีจำนวน 3 ส่วน</div></div></div><div class="reasonBox">🎯 สรุปจากการเชื่อมโยง: เรากำลังมองหาหลักฐานประเภท “ภาชนะดินเผาสามขา” มากขึ้นเรื่อย ๆ</div><div class="evidenceList" id="boardEvidenceList"></div><div class="thinkQuestion">💬 คำถามสำหรับกลุ่ม: “เบาะแสใดช่วยให้เราเปลี่ยนจากการคาดเดา มาเป็นข้อสันนิษฐานที่มีเหตุผลมากขึ้น?”</div><button class="btn" id="closeBoardBtn">กลับไปเลือกคำตอบ 🎯</button></div></div>
 <div id="revealModal" class="screen hidden">
   <div class="reveal14">
     <div class="reveal14Top">
@@ -1077,7 +1502,7 @@ let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog
 let camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
 scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
 const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,25),cameraYaw=0;let selectedClue=null,currentClueNumber=null,selectedTool=null,armedTool=null,working=false,activeClueObj=null;const found=new Set();let candidateSelected=null;const supportSelected=new Set();const reasonSelected=new Set();const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
-let heldDir=null;const MOVE_SPEED=6.20;const WORLD_LIMIT=15.5;let autoWalkPath=[],autoWalkIndex=0,autoWalking=false,finalApproach=false;
+let heldDir=null;const MOVE_SPEED=6.60;const WORLD_LIMIT=15.5;let autoWalkPath=[],autoWalkIndex=0,autoWalking=false,finalApproach=false;
 let viewYaw=0, viewPitch=0.18; let cameraDragging=false, cameraMoved=false, cameraStartX=0, cameraStartY=0, cameraLastX=0, cameraLastY=0;
 const CAMERA_RADIUS=10.5, CAMERA_HEIGHT=4.25, CAMERA_SENS=0.008, CAMERA_PITCH_SENS=0.005, CAMERA_MIN_PITCH=-0.05, CAMERA_MAX_PITCH=0.68; const CLUE_USE_DISTANCE=2.4;
 const C=[0xe9dfc8,0xd7c4a3,0x7d5b3f,0xffd166,0x86c5d8,0xd9a6d1,0x9fc7a3,0xf3c58c];
