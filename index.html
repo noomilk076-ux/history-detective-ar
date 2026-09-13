@@ -597,7 +597,284 @@
 }
 </style>
 
-</head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.14.1</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
+
+<style id="prototype715-final-analysis-style">
+/* Prototype 7.15 — iPad final-analysis layout
+   Two pages: Page 1 = evidence selection, Page 2 = reasons + hypothesis.
+   Gameplay and reveal logic are preserved. */
+
+#finalModal{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:10px!important;
+  overflow:hidden!important;
+}
+
+.final15{
+  width:min(1120px,96vw);
+  max-height:94vh;
+  overflow:hidden;
+  border-radius:24px;
+  border:3px solid #d6b35c;
+  background:linear-gradient(145deg,#fffdf7,#f7f0e1);
+  box-shadow:0 24px 80px rgba(0,0,0,.58);
+  color:#1c2738;
+  display:flex;
+  flex-direction:column;
+}
+
+.final15Header{
+  flex:0 0 auto;
+  padding:12px 18px 9px;
+  text-align:center;
+  border-bottom:2px solid #dfcfaa;
+  background:linear-gradient(180deg,#fffaf0,#f5ecd9);
+}
+
+.final15Badge{
+  display:inline-block;
+  padding:4px 13px;
+  border-radius:999px;
+  background:#fff1c3;
+  border:2px solid #ddb64f;
+  color:#70501d;
+  font-size:13px;
+  font-weight:950;
+}
+
+.final15Header h1{
+  margin:3px 0 0;
+  font-size:clamp(25px,4vw,40px);
+  line-height:1.05;
+  color:#3e2e1d;
+  font-weight:1000;
+}
+
+.final15Header p{
+  margin:4px 0;
+  font-size:clamp(13px,1.7vw,16px);
+  font-weight:800;
+  color:#65543c;
+}
+
+.final15Progress{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:5px;
+  font-size:12px;
+  font-weight:950;
+  color:#718096;
+}
+
+.final15Progress span{
+  width:25px;height:25px;
+  display:grid;place-items:center;
+  border-radius:50%;
+  background:#dce3eb;
+  color:#596678;
+}
+
+.final15Progress span.active{
+  background:#d7a936;
+  color:#fff;
+  box-shadow:0 0 0 3px #f8e6aa;
+}
+
+.final15Progress i{
+  color:#c39a45;
+  font-style:normal;
+}
+
+.final15Progress b{
+  margin-left:5px;
+  color:#735324;
+}
+
+.final15Page{
+  display:none;
+  flex:1 1 auto;
+  min-height:0;
+  padding:12px 18px 15px;
+  overflow:auto;
+}
+
+.final15Page.active{display:block}
+
+.final15Rule{
+  padding:9px 12px;
+  border-radius:13px;
+  background:#f0f4ff;
+  border:2px solid #c7d7ef;
+  color:#2e4260;
+  font-size:clamp(13px,1.7vw,16px);
+  line-height:1.4;
+  font-weight:850;
+}
+
+.final15Count{
+  margin:9px 0 7px;
+  padding:8px 12px;
+  border-radius:11px;
+  background:#eaf2ff;
+  border:2px solid #bfd3f4;
+  color:#243e67;
+  text-align:center;
+  font-size:15px;
+  font-weight:1000;
+}
+
+.final15SupportGrid{
+  grid-template-columns:repeat(4,1fr)!important;
+  gap:8px!important;
+  margin:7px 0!important;
+}
+
+.final15SupportGrid .supportPick{
+  min-height:70px;
+  padding:8px 10px;
+  border-width:2px;
+  border-radius:12px;
+  font-size:13px;
+  line-height:1.2;
+}
+
+.final15SupportGrid .supportPick .tag{
+  margin-top:4px;
+  padding:2px 6px;
+  font-size:10px;
+}
+
+.final15Talk{
+  margin:7px 0 4px;
+  padding:8px 11px;
+  border-radius:11px;
+  background:#fff5d8;
+  border:2px solid #e4c76e;
+  color:#5a4424;
+  font-size:13px;
+  line-height:1.35;
+  text-align:center;
+}
+
+.final15Msg{
+  min-height:24px;
+  margin:3px 0;
+  color:#40536c;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+
+.final15Next{
+  display:block;
+  margin:7px auto 0;
+  min-width:300px;
+  padding:10px 18px!important;
+  font-size:16px!important;
+}
+
+.final15ReasonTitle{
+  margin-top:10px;
+  color:#6e5127;
+  font-weight:1000;
+  font-size:16px;
+}
+
+.final15Reasons{
+  display:grid!important;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px!important;
+  margin:7px 0!important;
+}
+
+.final15Reasons .reasonChoice{
+  min-height:52px;
+  padding:7px 8px;
+  border-radius:12px;
+  font-size:13px;
+  line-height:1.25;
+}
+
+.final15Page h2{
+  margin:9px 0 6px;
+  font-size:18px;
+  color:#3f3325;
+}
+
+.final15Candidates{
+  margin:5px 0!important;
+  gap:9px!important;
+}
+
+.final15Candidates .candidate{
+  min-height:88px;
+  padding:8px;
+  font-size:15px;
+  border-width:2px;
+  border-radius:13px;
+}
+
+.final15PageNav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:8px;
+}
+
+.final15PageNav .btn{
+  padding:9px 13px!important;
+  font-size:14px!important;
+}
+
+.final15Back{
+  background:#eef2f6!important;
+  color:#324156!important;
+  border:2px solid #cbd5e1!important;
+}
+
+.final15Teacher{
+  display:block;
+  margin:8px auto 0;
+  padding:10px 18px!important;
+  font-size:16px!important;
+}
+
+@media(max-width:900px){
+  .final15SupportGrid{grid-template-columns:repeat(2,1fr)!important}
+  .final15Reasons{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:700px){
+  #finalModal{padding:5px!important}
+  .final15{
+    width:96vw;
+    max-height:96vh;
+    border-radius:19px;
+  }
+  .final15Header{padding:9px 11px 7px}
+  .final15Page{padding:9px 11px 12px}
+  .final15Rule{font-size:12px;padding:8px 10px}
+  .final15SupportGrid .supportPick{min-height:64px;font-size:12px}
+  .final15Next{min-width:0;width:100%}
+}
+
+@media(max-height:650px) and (orientation:landscape){
+  .final15{max-height:93vh}
+  .final15Header h1{font-size:26px}
+  .final15Header p{display:none}
+  .final15Header{padding:6px 14px}
+  .final15Page{padding:7px 14px 9px}
+  .final15SupportGrid .supportPick{min-height:55px}
+  .final15Talk{display:none}
+  .final15Count{margin:5px 0}
+  .final15Next{margin-top:4px;padding:7px 15px!important}
+}
+</style>
+
+</head><body><div id="app"><canvas id="world"></canvas><div id="top"><div id="title">🕵️ นักสืบประวัติศาสตร์</div><div id="status">🎮 สำรวจพิพิธภัณฑ์ • ค้นหาเบาะแส • ใช้เหตุผลจากหลักฐาน</div></div><div id="phaseBar"><span class="phase active" id="p1">① ค้นหา</span><span>→</span><span class="phase" id="p2">② ตรวจสอบ</span><span>→</span><span class="phase" id="p3">③ เชื่อมโยง</span><span>→</span><span class="phase" id="p4">④ สรุป</span></div><div class="pill">🎒 <span id="count">0</span>/8</div><div id="bag" class="hidden">🎒 กระเป๋าหลักฐาน<small id="bagText">ยังไม่มีหลักฐาน</small></div><div class="hint">🎮 เดินสำรวจ • 👆 ลากหมุนมุมกล้อง • 🧰 เลือกเครื่องมือเมื่อเข้าใกล้ • 🔎 ตรวจสอบ → อ่าน → เก็บหลักฐาน</div><div id="movePad" aria-label="ปุ่มควบคุมการเดิน"><button id="up" aria-label="เดินหน้า">▲</button><button id="left" aria-label="เดินซ้าย">◀</button><button id="center" aria-label="ใช้ไอเท็ม">🧰</button><button id="right" aria-label="เดินขวา">▶</button><button id="down" aria-label="ถอยหลัง">▼</button></div><div id="teacherDock"><button class="teacherBtn" id="teacherPause">⏸️ ครูหยุดคิด</button><button class="teacherBtn" id="teacherHelp">💡 คำถามชวนคิด</button></div><div id="learningToast"></div><div id="loading" class="screen"><div class="card" style="text-align:center"><div style="font-size:70px">🏛️</div><h1>กำลังสร้างพิพิธภัณฑ์</h1><p>เตรียมโลกนักสืบประวัติศาสตร์...</p></div></div><div id="start" class="screen hidden"><div class="card" style="text-align:center"><div style="font-size:75px">🕵️‍♀️</div><div style="font-size:13px;font-weight:900;color:#8b6b2b">PROTOTYPE 7.15.1</div><h1>ภารกิจนักสืบ</h1><p>สำรวจพิพิธภัณฑ์ด้วย <b>🎮 ปุ่มเดิน 4 ทิศทาง</b><br>เมื่อพบเบาะแส ให้กด <b>🧰 ใช้ไอเท็ม</b> และเลือกเครื่องมือที่เหมาะสม</p><button class="btn" id="startBtn">🚪 เริ่มภารกิจ</button></div></div><div id="clueModal"><div id="clueBox"><div id="clueNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="clueTitle"></h2><div id="clueText"></div><div id="toolStage" class="hidden"><div style="font-size:18px;font-weight:950">🧰 เลือกเครื่องมือสืบหลักฐาน</div><div class="tools" id="tools"></div><div id="toolMsg" style="font-weight:900;min-height:28px"></div></div><button class="btn" id="useClueBtn">🔎 ตรวจสอบเบาะแส</button><button class="btn hidden" id="collectBtn">🎒 เก็บเบาะแสใส่กระเป๋า</button><button class="btn hidden" id="closeBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="toolChoice"><div class="investigateStep"><span class="on">① พบเบาะแส</span><span>② เลือกเครื่องมือ</span><span>③ ตรวจสอบ</span><span>④ อ่านและเก็บ</span></div><div class="card"><div id="toolChoiceNo" style="font-weight:950;color:#8b6b2b"></div><h2 id="toolChoiceTitle">🧰 เลือกเครื่องมือสำหรับตรวจสอบ</h2><p id="toolChoiceHint">เลือกเครื่องมือที่คิดว่าเหมาะสม แล้วเครื่องมือจะปรากฏอยู่หน้าเบาะแส</p><div id="toolPreview" style="display:none;margin:12px 0;padding:12px 16px;border-radius:16px;background:linear-gradient(135deg,#fff8dc,#f4ead1);border:2px solid #e7c36b;text-align:center;font-size:24px;font-weight:950;color:#513b1f"></div><div class="toolGrid" id="toolChoiceGrid"></div><div class="actionNote" id="toolChoiceMsg"></div><button class="btn hidden" id="armToolBtn">🧰 นำไอเท็มไปตรวจสอบ</button><button class="btn" id="cancelToolBtn">กลับไปสำรวจ 🎮</button></div></div>
 <div id="thinkModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🔎</div><h1 id="thinkTitle" style="font-size:clamp(28px,6vw,46px)">หยุดคิดแบบนักสืบ</h1><div class="learnNote">💡 นักสืบที่ดีไม่รีบตอบ แต่ใช้ข้อมูลที่พบมา “ตั้งข้อสันนิษฐาน” และพร้อมปรับเมื่อมีเบาะแสใหม่</div><div class="thinkQuestion" id="thinkQuestion"></div><div class="chain" id="thinkChain"></div><div class="thinkGrid" id="thinkGrid"></div><div id="thinkMsg" style="font-weight:900;min-height:30px"></div><button class="btn hidden" id="thinkContinueBtn">➡️ ไปค้นหาเบาะแสต่อ</button></div></div>
 <div id="journeyModal"><div class="journeyCard">
@@ -614,7 +891,64 @@
   <button class="btn" id="walkRevealBtn">🚶 ไปยังห้องแสดงหลักฐาน</button>
   <div id="cabinetReadyBadge">✨ ตู้หลักฐานกำลังเรืองแสง — เดินเข้าใกล้ แล้วแตะที่ตู้เพื่อเปิดเฉลย!</div>
 </div></div><div id="finalApproachHint" class="finalApproachHint">✨ ห้องแสดงหลักฐานอยู่ด้านหน้า<br>🚶 ใช้ปุ่ม 4 ทิศทาง เดินเข้าใกล้ตู้ที่กำลังเรืองแสง แล้วแตะตู้เพื่อเปิดเฉลย</div>
-<div id="finalModal" class="screen hidden"><div class="card"><div style="font-size:48px">🎒🔎</div><h1 style="font-size:clamp(28px,6vw,46px)">ภารกิจสุดท้าย: สร้างคำตอบจากหลักฐาน</h1><p>นักสืบไม่ควรเลือกคำตอบจากการเดา — ต้องมี <b>ข้อมูลที่สนับสนุน</b> และอธิบายได้ว่าเหตุใดข้อมูลนั้นจึงเกี่ยวข้อง</p><div class="finalSummary">🎯 <b>ภารกิจสุดท้าย</b><br>เลือกเบาะแสอย่างน้อย 3 ชิ้น → บอกว่าแต่ละชิ้นช่วยเราเรื่องอะไร → เชื่อมโยงเป็นเหตุผล → จึงเลือกข้อสันนิษฐาน</div><div class="learnNote">🧠 กติกา: เลือกเบาะแสที่กลุ่มคิดว่า “สนับสนุนคำตอบ” อย่างน้อย <b>3 ชิ้น</b> แล้วอธิบายความเชื่อมโยง ก่อนเลือกคำตอบ</div><h2>1️⃣ เลือกหลักฐานสนับสนุนอย่างน้อย 3 ชิ้น</h2><div class="supportCount" id="supportCount">เลือกแล้ว 0 / 3 ชิ้น</div><div class="supportGrid" id="supportGrid"></div><div class="reasonPrompt">💬 ลองพูดให้เพื่อนฟัง: “เราเลือกหลักฐานเหล่านี้ เพราะ...”</div><div class="reasonChoices" id="reasonChoices"><button class="reasonChoice" data-reason="บริบทและช่วงเวลา">🕰️ บอกบริบท/ช่วงเวลา</button><button class="reasonChoice" data-reason="วัสดุและการผลิต">🏺 บอกวัสดุ/การผลิต</button><button class="reasonChoice" data-reason="รูปร่างและลักษณะ">🔎 บอกรูปร่าง/ลักษณะ</button><button class="reasonChoice" data-reason="แหล่งที่พบ">📍 บอกแหล่งที่พบ</button></div><div id="supportMsg" style="font-weight:900;min-height:28px"></div><h2>2️⃣ เลือกข้อสันนิษฐานของกลุ่ม</h2><div class="candidateGrid" id="candidateGrid"></div><div id="candidateMsg" style="font-weight:900;min-height:28px"></div><button class="btn hidden" id="boardBtn">🧠 เปิดกระดานเชื่อมโยงหลักฐาน</button><button class="btn reveal hidden" id="teacherRevealBtn">✨ เฉลยหลักฐานที่ตามหา</button></div></div>
+<div id="finalModal" class="screen hidden">
+  <div class="final15">
+    <div class="final15Header">
+      <div class="final15Badge">🎒🔎 ภารกิจสุดท้าย</div>
+      <h1>สร้างคำตอบจากหลักฐาน</h1>
+      <p>นักสืบไม่เลือกคำตอบจากการเดา — เราต้องใช้หลักฐานและเหตุผล</p>
+      <div class="final15Progress">
+        <span id="finalPageDot1" class="active">1</span><i>—</i><span id="finalPageDot2">2</span>
+        <b id="finalPageTitle">เลือกหลักฐานสนับสนุน</b>
+      </div>
+    </div>
+
+    <section id="finalPage1" class="final15Page active">
+      <div class="final15Rule">
+        🎯 <b>ขั้นที่ 1</b> เลือกเบาะแสที่กลุ่มคิดว่า “สนับสนุนคำตอบ” อย่างน้อย <b>3 ชิ้น</b>
+        แล้วอธิบายว่าแต่ละชิ้นช่วยเราเรื่องอะไร
+      </div>
+
+      <div class="final15Count" id="supportCount">เลือกแล้ว 0 / 3 ชิ้น</div>
+      <div class="supportGrid final15SupportGrid" id="supportGrid"></div>
+
+      <div class="final15Talk">
+        💬 ลองพูดให้เพื่อนฟัง: <b>“เราเลือกหลักฐานเหล่านี้ เพราะ...”</b>
+      </div>
+
+      <div id="supportMsg" class="final15Msg">🧠 เลือกหลักฐานที่กลุ่มคิดว่าสนับสนุนคำตอบให้ได้อย่างน้อย 3 ชิ้น</div>
+
+      <button class="btn final15Next" id="finalNextBtn">ไปขั้นที่ 2: เชื่อมโยงเหตุผล ➜</button>
+    </section>
+
+    <section id="finalPage2" class="final15Page">
+      <div class="final15Rule">
+        🧠 <b>ขั้นที่ 2</b> บอกว่าเบาะแสของกลุ่มช่วยเราเรื่องใด แล้วเลือกข้อสันนิษฐาน
+      </div>
+
+      <div class="final15ReasonTitle">🔗 เบาะแสของเราช่วยบอกอะไร?</div>
+      <div class="reasonChoices final15Reasons" id="reasonChoices">
+        <button class="reasonChoice" data-reason="บริบทและช่วงเวลา">🕰️ บอกบริบท/ช่วงเวลา</button>
+        <button class="reasonChoice" data-reason="วัสดุและการผลิต">🏺 บอกวัสดุ/การผลิต</button>
+        <button class="reasonChoice" data-reason="รูปร่างและลักษณะ">🔎 บอกรูปร่าง/ลักษณะ</button>
+        <button class="reasonChoice" data-reason="แหล่งที่พบ">📍 บอกแหล่งที่พบ</button>
+      </div>
+
+      <div class="final15Msg" id="reasonMsg">เลือกอย่างน้อย 1 หมวดเพื่ออธิบายความเชื่อมโยง</div>
+
+      <h2>2️⃣ เลือกข้อสันนิษฐานของกลุ่ม</h2>
+      <div class="candidateGrid final15Candidates" id="candidateGrid"></div>
+      <div id="candidateMsg" class="final15Msg"></div>
+
+      <div class="final15PageNav">
+        <button class="btn final15Back" id="finalBackBtn">← กลับไปตรวจหลักฐาน</button>
+        <button class="btn hidden" id="boardBtn">🧠 เปิดกระดานเชื่อมโยงหลักฐาน</button>
+      </div>
+
+      <button class="btn reveal hidden final15Teacher" id="teacherRevealBtn">✨ เฉลยหลักฐานที่ตามหา</button>
+    </section>
+  </div>
+</div>
 <div id="boardModal" class="screen hidden"><div class="card"><div style="font-size:46px">🧠🕵️</div><h1 style="font-size:clamp(28px,6vw,46px)">กระดานสืบสวนหลักฐาน</h1><p>ลองเชื่อมโยงข้อมูลจาก 8 เบาะแส ก่อนตัดสินใจเลือกคำตอบ</p><div class="boardStep"><b>1</b><div><strong>แหล่งที่พบ</strong><br>ขุดพบในชั้นดินของแหล่งโบราณคดี → เป็นร่องรอยจากอดีต</div></div><div class="boardStep"><b>2</b><div><strong>ช่วงเวลาและบริบท</strong><br>สัมพันธ์กับชุมชนก่อนประวัติศาสตร์</div></div><div class="boardStep"><b>3</b><div><strong>วัสดุและการผลิต</strong><br>เป็นภาชนะดินเผา → ขึ้นรูป ตากแห้ง และเผา</div></div><div class="boardStep"><b>4</b><div><strong>รูปร่าง</strong><br>มีส่วนยื่นรองรับน้ำหนัก และมีจำนวน 3 ส่วน</div></div><div class="reasonBox">🎯 สรุปจากการเชื่อมโยง: เรากำลังมองหาหลักฐานประเภท “ภาชนะดินเผาสามขา” มากขึ้นเรื่อย ๆ</div><div class="evidenceList" id="boardEvidenceList"></div><div class="thinkQuestion">💬 คำถามสำหรับกลุ่ม: “เบาะแสใดช่วยให้เราเปลี่ยนจากการคาดเดา มาเป็นข้อสันนิษฐานที่มีเหตุผลมากขึ้น?”</div><button class="btn" id="closeBoardBtn">กลับไปเลือกคำตอบ 🎯</button></div></div>
 <div id="revealModal" class="screen hidden">
   <div class="reveal14">
@@ -743,7 +1077,7 @@ let scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec4d8);scene.fog
 let camera=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,.1,100);let renderer=new THREE.WebGLRenderer({canvas:world,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=true;
 scene.add(new THREE.HemisphereLight(0xfff6df,0x41566d,2.4));let sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(8,18,8);sun.castShadow=true;scene.add(sun);
 const root=new THREE.Group();scene.add(root);const walkables=[],clueObjects=[];let gameStarted=false;let activeToolModel=null;let playerPos=new THREE.Vector3(0,1,25),cameraYaw=0;let selectedClue=null,currentClueNumber=null,selectedTool=null,armedTool=null,working=false,activeClueObj=null;const found=new Set();let candidateSelected=null;const supportSelected=new Set();const reasonSelected=new Set();const candidateChoices=['ภาชนะดินเผาสามขา / หม้อสามขา','ขวานหินขัด','ลูกปัดโบราณ'];
-let heldDir=null;const MOVE_SPEED=5.13;const WORLD_LIMIT=15.5;let autoWalkPath=[],autoWalkIndex=0,autoWalking=false,finalApproach=false;
+let heldDir=null;const MOVE_SPEED=6.20;const WORLD_LIMIT=15.5;let autoWalkPath=[],autoWalkIndex=0,autoWalking=false,finalApproach=false;
 let viewYaw=0, viewPitch=0.18; let cameraDragging=false, cameraMoved=false, cameraStartX=0, cameraStartY=0, cameraLastX=0, cameraLastY=0;
 const CAMERA_RADIUS=10.5, CAMERA_HEIGHT=4.25, CAMERA_SENS=0.008, CAMERA_PITCH_SENS=0.005, CAMERA_MIN_PITCH=-0.05, CAMERA_MAX_PITCH=0.68; const CLUE_USE_DISTANCE=2.4;
 const C=[0xe9dfc8,0xd7c4a3,0x7d5b3f,0xffd166,0x86c5d8,0xd9a6d1,0x9fc7a3,0xf3c58c];
@@ -1030,13 +1364,47 @@ thinkContinueBtn.onclick=()=>{
 
 function showFinal(){
   if(found.size<8){status.textContent='🔎 ต้องเก็บเบาะแสให้ครบ 8 ชิ้นก่อน';return}
-  finalModal.classList.remove('hidden');
+  
+const finalPage1=document.getElementById('finalPage1'),
+      finalPage2=document.getElementById('finalPage2'),
+      finalNextBtn=document.getElementById('finalNextBtn'),
+      finalBackBtn=document.getElementById('finalBackBtn'),
+      finalPageDot1=document.getElementById('finalPageDot1'),
+      finalPageDot2=document.getElementById('finalPageDot2'),
+      finalPageTitle=document.getElementById('finalPageTitle'),
+      reasonMsg=document.getElementById('reasonMsg');
+
+function showFinalPage(page){
+  const p1=page===1;
+  finalPage1.classList.toggle('active',p1);
+  finalPage2.classList.toggle('active',!p1);
+  finalPageDot1.classList.toggle('active',p1);
+  finalPageDot2.classList.toggle('active',!p1);
+  finalPageTitle.textContent=p1?'เลือกหลักฐานสนับสนุน':'เชื่อมโยงเหตุผล + ข้อสันนิษฐาน';
+}
+
+finalNextBtn.onclick=()=>{
+  if(supportSelected.size<3){
+    supportMsg.textContent='⚠️ ต้องเลือกหลักฐานสนับสนุนอย่างน้อย 3 ชิ้นก่อน';
+    return;
+  }
+  showFinalPage(2);
+  status.textContent='🧠 ขั้นที่ 2: เชื่อมโยงเหตุผลและเลือกข้อสันนิษฐาน';
+};
+
+finalBackBtn.onclick=()=>{
+  showFinalPage(1);
+  status.textContent='🎯 ขั้นที่ 1: ตรวจสอบหลักฐานสนับสนุน';
+};
+
+finalModal.classList.remove('hidden');
   setPhase(4);
   supportSelected.clear(); reasonSelected.clear(); candidateSelected=null;
   supportGrid.innerHTML=''; candidateGrid.innerHTML='';
   supportMsg.textContent=''; candidateMsg.textContent='';
   boardBtn.classList.add('hidden'); teacherRevealBtn.classList.add('hidden');
   supportCount.textContent='เลือกแล้ว 0 / 3 ชิ้น';
+  showFinalPage(1);
   const nums=[...found].sort((a,b)=>a-b);
   nums.forEach(n=>{
     const b=document.createElement('button');b.className='supportPick';
@@ -1058,6 +1426,9 @@ function showFinal(){
       const r=b.dataset.reason;
       if(reasonSelected.has(r)){reasonSelected.delete(r);b.classList.remove('selected')}
       else {reasonSelected.add(r);b.classList.add('selected')}
+      reasonMsg.textContent=reasonSelected.size
+        ? `✅ เลือกแล้ว ${reasonSelected.size} หมวด — อธิบายความเชื่อมโยงกับเพื่อนได้เลย`
+        : 'เลือกอย่างน้อย 1 หมวดเพื่ออธิบายความเชื่อมโยง';
       updateFinalReady();
     };
   });
