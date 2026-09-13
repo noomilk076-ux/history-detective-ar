@@ -62,6 +62,8 @@
 .clueReadBox{margin-top:10px;padding:12px 14px;border-radius:15px;background:#fffdf7;border:2px solid #e5d5ae;text-align:left;line-height:1.55}
 .clueReadBox b{color:#7a5320}
 .toolExplain{font-size:13px;line-height:1.45;color:#4b5563;margin-top:6px}
+
+.roomWallHint87{position:fixed;left:50%;top:76px;transform:translateX(-50%);z-index:30;background:rgba(17,31,45,.86);color:#fff;padding:8px 14px;border-radius:14px;font-size:14px;display:none;pointer-events:none;transition:opacity .25s ease;box-shadow:0 4px 18px rgba(0,0,0,.3)}
 </style>
 <style id="prototype714-reveal-style">
 /* =========================================================
@@ -1810,6 +1812,7 @@
     </section>
   </div>
 </div>
+<div id="roomWallHint87" class="roomWallHint87">👀 อยู่ในห้อง • ผนังโปร่งใสเพื่อมองเห็นการสำรวจภายใน</div>
 <script type="module">
 const world=document.getElementById('world'),loading=document.getElementById('loading'),start=document.getElementById('start'),startBtn=document.getElementById('startBtn'),status=document.getElementById('status'),learningToast=document.getElementById('learningToast'),teacherPause=document.getElementById('teacherPause'),teacherHelp=document.getElementById('teacherHelp');
 const countEl=document.getElementById('count'),bag=document.getElementById('bag'),bagText=document.getElementById('bagText');
@@ -2172,6 +2175,84 @@ function buildAtriumArchitecture84(){
   });
 }
 
+/* Prototype 8.8 — TRANSPARENT ROOM WALLS FIXED
+   ผนังห้องจะโปร่งใสเมื่อผู้เล่นเข้าไปอยู่ในห้องนั้น เพื่อมองเห็นตัวละคร/ฉากภายใน
+   แต่ยังคงชนได้ตามเดิม และกลับมาทึบเมื่อออกจากห้อง */
+const roomWalls87=[];
+const roomVisualWalls87=[];
+function registerVisualWall87(mesh,roomIndex){
+  if(!mesh || !mesh.material) return mesh;
+  mesh.userData.roomWall87=true;
+  mesh.userData.roomIndex87=roomIndex;
+  mesh.userData.baseOpacity87=(mesh.material.opacity===undefined?1:mesh.material.opacity);
+  mesh.userData.baseTransparent87=!!mesh.material.transparent;
+  roomVisualWalls87.push(mesh);
+  return mesh;
+}
+function roomWall87(mesh,roomIndex){
+  if(!mesh || !mesh.material) return mesh;
+  mesh.userData.roomWall87=true;
+  mesh.userData.roomIndex87=roomIndex;
+  mesh.userData.baseOpacity87=(mesh.material.opacity===undefined?1:mesh.material.opacity);
+  mesh.userData.baseTransparent87=!!mesh.material.transparent;
+  roomWalls87.push(mesh);
+  return mesh;
+}
+function setRoomWall87(mesh,visibleInside){
+  if(!mesh || !mesh.material) return;
+  const m=mesh.material;
+  m.transparent=visibleInside;
+  m.opacity=visibleInside?.10:(mesh.userData.baseOpacity87??1);
+  m.depthWrite=!visibleInside;
+  m.depthTest=true;
+  if(visibleInside){
+    m.side=THREE.DoubleSide;
+    m.alphaTest=0;
+    if('roughness' in m) m.roughness=.8;
+  }
+  if(m.needsUpdate!==undefined) m.needsUpdate=true;
+}
+function collectRoomFacadeWalls87(){
+  // 8.7 decorative facades were created as plain meshes, so they were not
+  // part of roomWalls87. Register the large facade panels as visual walls too.
+  const facades=[
+    {x:-27,z:15,i:0},{x:-27,z:-7,i:1},{x:27,z:15,i:2},{x:27,z:-7,i:3},
+    {x:-9,z:-28,i:4},{x:10,z:-28,i:5}
+  ];
+  root.traverse(o=>{
+    if(!o.isMesh || !o.material || o.userData.roomWall87) return;
+    const p=o.position;
+    // Large, vertical-ish box panels around the six room entrances/facades.
+    if(!o.geometry || !o.geometry.parameters) return;
+    const g=o.geometry.parameters;
+    const w=g.width||0,h=g.height||0,d=g.depth||0;
+    if(h<3.2) return;
+    for(const f of facades){
+      const near=Math.hypot(p.x-f.x,p.z-f.z);
+      if(near<5.5 && h>=3.5 && (w>=7 || d>=.25)){
+        registerVisualWall87(o,f.i);
+        break;
+      }
+    }
+  });
+}
+function updateRoomWalls87(){
+  if(!playerPos || !roomWalls87.length) return;
+  const rooms=[
+    {x:-27,z:15,rx:10,rz:10}, {x:-27,z:-7,rx:10,rz:10},
+    {x:27,z:15,rx:10,rz:10}, {x:27,z:-7,rx:10,rz:10},
+    {x:-9,z:-28,rx:9.5,rz:8}, {x:10,z:-28,rx:9.5,rz:8}
+  ];
+  let active=-1;
+  for(let i=0;i<rooms.length;i++){
+    const r=rooms[i];
+    if(Math.abs(playerPos.x-r.x)<=r.rx && Math.abs(playerPos.z-r.z)<=r.rz){active=i;break;}
+  }
+  roomWalls87.forEach(w=>setRoomWall87(w,w.userData.roomIndex87===active));
+  roomVisualWalls87.forEach(w=>setRoomWall87(w,w.userData.roomIndex87===active));
+  if(roomWallHint87) roomWallHint87.style.display=active>=0?'block':'none';
+}
+
 function buildMuseum(){
   // GRAND MUSEUM 6.8 — โถงกลางเป็นพระเอก ห้องต่าง ๆ อยู่ด้านข้าง/ด้านหลัง
   const B=72;
@@ -2196,39 +2277,40 @@ function buildMuseum(){
   const banner=(x,c,text)=>{box(1.5,4.8,.14,c,x,5.2,19);box(1.75,.2,.16,0xb58c62,x,7.55,19);label(text,new THREE.Vector3(x,5.2,18.83),1.65)};
   banner(-9,0xa64242,'อดีต\nส่องทาง'); banner(9,0x2867a8,'หลักฐาน\nเล่าเรื่อง');
   // ห้องปีกซ้าย/ขวา และห้องด้านหลัง
-  function wingRoom(x,z,w,d,c,name,side,accent){
+  function wingRoom(x,z,w,d,c,name,side,accent,roomIndex){
     box(w,.25,d,c,x,-.1,z);
     const L=x-w/2,R=x+w/2,T=z-d/2,B=z+d/2,wallC=0xf6ecdd,trim=0xb58c62,door=9.0;
+    const W=(ww,hh,dd,cc,xx,yy,zz)=>roomWall87(box(ww,hh,dd,cc,xx,yy,zz),roomIndex);
     if(side==='east'){
-      box(.3,6,d,wallC,L,3,z); box(w,6,.3,wallC,x,3,T); box(w,6,.3,wallC,x,3,B);
+      W(.3,6,d,wallC,L,3,z); W(w,6,.3,wallC,x,3,T); W(w,6,.3,wallC,x,3,B);
       // ผนังขวาแบ่งสองช่วง เว้นช่องประตูตรงกลาง
       const seg=(d-door)/2;
-      box(.3,6,seg,wallC,R,3,z-(door+seg)/2); box(.3,6,seg,wallC,R,3,z+(door+seg)/2);
+      W(.3,6,seg,wallC,R,3,z-(door+seg)/2); W(.3,6,seg,wallC,R,3,z+(door+seg)/2);
       box(.34,6,.34,trim,R,3,z-door/2); box(.34,6,.34,trim,R,3,z+door/2); box(.35,6,.35,accent,R+.15,3,z-door/2); box(.35,6,.35,accent,R+.15,3,z+door/2);
       label('🚪 '+name,new THREE.Vector3(R+.7,4.2,z),2.0);
     } else if(side==='west'){
-      box(.3,6,d,wallC,R,3,z); box(w,6,.3,wallC,x,3,T); box(w,6,.3,wallC,x,3,B);
+      W(.3,6,d,wallC,R,3,z); W(w,6,.3,wallC,x,3,T); W(w,6,.3,wallC,x,3,B);
       // ผนังซ้ายแบ่งสองช่วง เว้นช่องประตูตรงกลาง
       const seg=(d-door)/2;
-      box(.3,6,seg,wallC,L,3,z-(door+seg)/2); box(.3,6,seg,wallC,L,3,z+(door+seg)/2);
+      W(.3,6,seg,wallC,L,3,z-(door+seg)/2); W(.3,6,seg,wallC,L,3,z+(door+seg)/2);
       box(.34,6,.34,trim,L,3,z-door/2); box(.34,6,.34,trim,L,3,z+door/2); box(.35,6,.35,accent,L-.15,3,z-door/2); box(.35,6,.35,accent,L-.15,3,z+door/2);
       label('🚪 '+name,new THREE.Vector3(L-.7,4.2,z),2.0);
     } else {
       // ห้องด้านหลัง: ทางเข้าอยู่ที่ผนังด้านใต้ (ขอบ B) ซึ่งหันเข้าหาโถงกลาง
-      box(.3,6,d,wallC,L,3,z); box(.3,6,d,wallC,R,3,z); box(w,6,.3,wallC,x,3,T);
+      W(.3,6,d,wallC,L,3,z); W(.3,6,d,wallC,R,3,z); W(w,6,.3,wallC,x,3,T);
       // ผนังด้านโถงแบ่งสองช่วง เว้นช่องประตูตรงกลาง
       const seg=(w-door)/2;
-      box(seg,6,.3,wallC,x-(door+seg)/2,3,B); box(seg,6,.3,wallC,x+(door+seg)/2,3,B);
+      W(seg,6,.3,wallC,x-(door+seg)/2,3,B); W(seg,6,.3,wallC,x+(door+seg)/2,3,B);
       box(.34,6,.34,trim,x-door/2,3,B); box(.34,6,.34,trim,x+door/2,3,B); box(.35,6,.35,accent,x-door/2,3,B+.15); box(.35,6,.35,accent,x+door/2,3,B+.15);
       label('🚪 '+name,new THREE.Vector3(x,4.2,B+.7),2.0);
     }
   }
-  wingRoom(-27,15,17,18,0xe6c08f,'ห้องขุดค้น','east',0xd98b42);
-  wingRoom(-27,-7,17,18,0xb8d8e8,'ห้องแผนที่','east',0x3d87c7);
-  wingRoom(27,15,17,18,0xc9e6c8,'ห้องหลักฐาน','west',0x67a86e);
-  wingRoom(27,-7,17,18,0xe7c4d7,'ห้องวิเคราะห์','west',0x6b6be8);
-  wingRoom(-9,-28,16,14,0xf0d3a0,'ห้องเครื่องปั้น','north',0xc86b3c);
-  wingRoom(10,-28,16,14,0xd4c9ef,'ห้องนักสืบ','north',0x7656c8);
+  wingRoom(-27,15,17,18,0xe6c08f,'ห้องขุดค้น','east',0xd98b42,0);
+  wingRoom(-27,-7,17,18,0xb8d8e8,'ห้องแผนที่','east',0x3d87c7,1);
+  wingRoom(27,15,17,18,0xc9e6c8,'ห้องหลักฐาน','west',0x67a86e,2);
+  wingRoom(27,-7,17,18,0xe7c4d7,'ห้องวิเคราะห์','west',0x6b6be8,3);
+  wingRoom(-9,-28,16,14,0xf0d3a0,'ห้องเครื่องปั้น','north',0xc86b3c,4);
+  wingRoom(10,-28,16,14,0xd4c9ef,'ห้องนักสืบ','north',0x7656c8,5);
   // ช่องทาง/ทางเดินชัดเจนจากโถงไปแต่ละปีก
   box(4.5,.08,16,0xd5bd94,-18.5,.08,15); box(4.5,.08,16,0xd5bd94,18.5,.08,15);
   box(4.5,.08,16,0xd5bd94,-18.5,.08,-7); box(4.5,.08,16,0xd5bd94,18.5,.08,-7);
@@ -2747,6 +2829,7 @@ function updateGame(dt){
     if(orb) orb.rotation.y += dt*(active?1.7:0.8);
   });
   updateRoomIdentity721();
+  updateRoomWalls87();
 }
 
 function animate(){requestAnimationFrame(animate); const now=performance.now(); const dt=Math.min((now-(animate.last||now))/1000,.05); animate.last=now; updateGame(dt); renderer.render(scene,camera)}
@@ -3004,67 +3087,103 @@ function buildArchitecture85(){
 buildArchitecture85();
 
 
-/* ================================================================
-   8.9 HERO SCENE POLISH
-   Richer museum interiors. Decorative only: no collision/path changes.
-================================================================ */
-function heroFrame(x,y,z,w,h,accent,title){
-  const g=new THREE.Group(); g.position.set(x,y,z); root.add(g);
-  vBox(w,.28,.24,0x6f472e,0,h/2,0,g);
-  vBox(.24,h,.24,0x6f472e,-w/2,0,0,g); vBox(.24,h,.24,0x6f472e,w/2,0,0,g);
-  vBox(w-.45,.12,.12,accent,0,h/2-.38,-.14,g,1.1);
-  label(title,new THREE.Vector3(x,y+h/2-.25,z-.28),1.35);
-  return g;
-}
-function heroCase(x,z,w=3.8,h=3.0,accent=0x73d6ff){
-  const g=vGlassCase(x,z,w,h);
-  const glow=new THREE.PointLight(accent,1.0,6,2); glow.position.set(x,2.0,z); root.add(glow);
-  return g;
-}
-function heroStone(x,y,z,s=1,c=0x8d877d){
-  const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(s);root.add(g);
-  vBox(1.05,.72,.82,c,0,.36,0,g); vBox(.72,.45,.58,c+.000011,0,.86,.03,g); return g;
-}
-function heroSkeleton(x,y,z,s=1){
-  const g=new THREE.Group();g.position.set(x,y,z);g.scale.setScalar(s);root.add(g);
-  const bone=0xd9d0bc;
-  const cyl=(r,len,px,py,pz,rx=0,rz=0)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),vMat(bone,.15));m.position.set(px,py,pz);m.rotation.x=rx;m.rotation.z=rz;g.add(m)};
-  cyl(.25,2.2,0,1.15,0,0,Math.PI/2); // spine
-  for(let i=0;i<6;i++){cyl(.08,1.65,0,1.2,.0-i*.02,Math.PI/2,i%2?.12:-.12);}
-  cyl(.38,.55,-1.28,1.18,0,0,Math.PI/2); // skull-ish head
-  for(const sy of [-.48,.48]) cyl(.12,1.5,sy,0.55,0,0,sy>0?.12:-.12);
-  for(const sy of [-.42,.42]) cyl(.10,1.15,sy,-.65,0,0,sy>0?.1:-.1);
-  return g;
-}
-function heroMicroscope(x,y,z){
-  const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
-  vBox(.7,.18,.8,0x26364e,0,.1,0,g);vBox(.18,1.0,.22,0x25354c,-.18,.62,0,g);
-  vBox(.55,.12,.22,0x25354c,.1,1.05,0,g);vCyl(.12,.45,0x5d6d84,.34,1.25,0,g,12);
-  vCyl(.08,.32,0x77cfff,.36,1.5,0,g,12,1.6); return g;
-}
-function heroTestTube(x,y,z,c){
-  const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
-  vCyl(.09,.55,0xddeeff,0,.3,0,g,12);vCyl(.065,.22,c,0,.22,0,g,12,1.5);return g;
-}
-function heroBoardCard(x,y,z,c,text){
-  vBox(1.25,.9,.08,c,x,y,z,root,.25);label(text,new THREE.Vector3(x,y+.02,z-.08),.72);
-}
-function heroBrickKiln(x,y,z){
-  const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
-  // arched kiln body
-  vCyl(3.0,4.4,0x8c5136,0,2.2,0,g,20);
-  vCyl(2.55,3.0,0xb2643b,0,1.75,0,g,20);
-  // brick courses
-  for(let row=0;row<4;row++){
-    const r=2.85-row*.18;
-    for(let i=0;i<10;i++){const a=i*Math.PI*2/10+(row%2)*.12;vBox(.75,.22,.34,0x70432f,Math.cos(a)*r,.55+row*.92,Math.sin(a)*r,g)}
+/* Prototype 8.6 — HERO SCENES
+   เปลี่ยนแต่ละห้องให้มี "พระเอก" ชัดเจนตามภาพอ้างอิง โดยไม่เพิ่ม collision ใหม่ */
+function buildHeroScenes86(){
+  const wood=0x6f472f, wood2=0x9b6942, stone=0xd8cfbd, brass=0xe9b84f;
+  function signBoard(text,x,y,z,w=8,c=wood){
+    vBox(w,.62,.24,c,x,y,z);
+    label(text,new THREE.Vector3(x,y,z-.16),1.45);
   }
-  // glowing mouth
-  vBox(1.7,1.35,.20,0x3a2118,0,.85,-2.45,g);
-  vBox(1.15,.75,.12,0xff7a2d,0,.82,-2.58,g,2.2);
-  vRing(1.15,.09,0xffb23f,0,1.0,-2.60,g,1.7);
-  return g;
+  function framePanel(x,y,z,w,h,accent){
+    vBox(w,h,.16,wood,x,y,z); vBox(w-.32,h-.32,.06,accent,x,y,z-.10);
+  }
+  function shelf(x,z,accent=wood2){
+    vBox(4.8,.18,1.0,accent,x,.55,z);
+    vBox(4.8,.18,1.0,accent,x,1.65,z);
+    vBox(.18,2.0,1.0,accent,x-2.3,1.05,z); vBox(.18,2.0,1.0,accent,x+2.3,1.05,z);
+  }
+  function potRow(x,z,count=4){
+    for(let i=0;i<count;i++) vPot(x+(i-(count-1)/2)*1.15,.82,z,.42+(i%2)*.07);
+  }
+
+  // ⛏️ EXCAVATION — ชั้นดินและหลุมขุดเป็นพระเอก
+  signBoard('⛏️ ห้องขุดค้น • EXCAVATION',-27,5.8,6.1,10,wood);
+  framePanel(-27,4.0,-.0,10,4.6,0x9d7047);
+  // ชั้นดินแนวนอน
+  [0x8b5a3c,0xa86f43,0x6e4937,0xb77d4e].forEach((c,i)=>vBox(9.2,.72,.20,c,-27,1.15+i*.78,5.75));
+  // เครื่องมือบนแท่น
+  vBox(5.8,.35,2.0,wood2,-27,.55,8.0);
+  for(let i=-2;i<=2;i++) vBox(.38,.12,1.45,0x6f5542,-27+i*1.15,1.0,8.0);
+  // โบราณวัตถุเล็ก ๆ รอบหลุม
+  potRow(-27,9.0,5);
+  vLantern(-34,3.1,9,0xffa94d); vLantern(-20,3.1,9,0xffa94d);
+
+  // 🗺️ MAP — แผนที่นูนขนาดใหญ่เต็มผนัง
+  signBoard('🗺️ ห้องแผนที่ • MAP ROOM',-27,5.8,-15.0,10,wood);
+  framePanel(-27,3.65,-15.9,11.5,5.0,0x276fa5);
+  vBox(9.6,.12,.20,0x68b9d8,-27,2.1,-15.55);
+  // รูปทรงแผนที่ประเทศไทยแบบบล็อกย่อส่วน
+  const mapPts=[[-29.7,3.4],[-28.4,3.8],[-27.0,3.2],[-25.8,2.6],[-26.1,1.8],[-27.0,.95],[-27.7,-.05],[-27.3,-1.2],[-27.9,-2.1],[-28.3,-3.1],[-27.7,-4.0],[-27.0,-3.5],[-26.7,-2.3],[-26.2,-1.1],[-25.4,-.1],[-24.8,1.0],[-24.4,2.2]];
+  mapPts.forEach((q,i)=>vBox(.72,.25,.72, i<6?0x5ba95f:0x69b56a,q[0],3.0,q[1]-15.9));
+  [[-30.0,2.9],[-26.1,2.6],[-27.5,-.2],[-27.2,-2.8],[-25.0,.9]].forEach(q=>{vRing(.22,.07,0xffd166,q[0],3.35,q[1]-15.9,root,2.0)});
+  label('กาญจนบุรี   •   สุพรรณบุรี   •   ชุมพร   •   สุราษฎร์ธานี   •   กระบี่',new THREE.Vector3(-27,1.9,-15.7),1.0);
+  vLantern(-34,3,-12,0x65b8ff);vLantern(-20,3,-12,0x65b8ff);
+
+  // 🏺 EVIDENCE — ตู้กระจกหลายตู้ + hero artifact
+  signBoard('🏺 ห้องหลักฐาน • EVIDENCE ROOM',27,5.8,6.1,10,wood);
+  vGlassCase(23.3,3.0,9.4,2.2); vGlassCase(30.7,3.0,9.4,2.2);
+  vPot(23.3,1.0,9.4,.62); vPot(30.7,1.0,9.4,.68);
+  vBox(10.8,.28,1.4,wood2,27,.42,10.2);
+  // ตู้พระเอกด้านหลัง
+  vGlassCase(27,3.1,16.0,3.4); vPot(27,1.2,16,.98);
+  vRing(4.0,.09,0xffd166,27,.35,16,root,1.6);
+  shelf(27,19.0); potRow(27,18.45,5);
+  vLantern(21,3,13,0xffc45b);vLantern(33,3,13,0xffc45b);
+
+  // 🔬 ANALYSIS — ห้องแล็บชัดเจน
+  signBoard('🔬 ห้องวิเคราะห์ • ANALYSIS ROOM',27,5.8,-15.0,10,wood);
+  // โต๊ะยาว + อุปกรณ์
+  vBox(10.8,.55,2.2,0x304a68,27,.55,-12.0);
+  for(let i=0;i<5;i++) vCyl(.22,.85,[0x73c9e8,0x9de0c1,0xd8a4e8,0x79b5ff,0xf2d17d][i],23.2+i*1.9,1.3,-12.0);
+  // จอวิเคราะห์ใหญ่
+  framePanel(27,4.0,-16.0,9.6,4.4,0x203b5e);
+  label('สังเกต  →  เปรียบเทียบ  →  วิเคราะห์  →  สรุป',new THREE.Vector3(27,3.95,-15.82),1.25);
+  // เครื่องมือบนโต๊ะ
+  for(let i=0;i<4;i++) vBox(.9,.12,.9,0x9ab0c4,24+i*2,1.05,-10.9);
+  vLantern(21,3,-10,0x6cbcff);vLantern(33,3,-10,0x6cbcff);
+
+  // 🔥 POTTERY — เตาเผาขนาดใหญ่เป็น landmark
+  signBoard('🔥 ห้องเครื่องปั้น • POTTERY ROOM',-9,5.8,-34.0,12,wood);
+  // เตาเผาอิฐแบบซุ้มโค้งด้านหลัง
+  vCyl(4.3,5.2,0x7d4932,-9,2.55,-32.9,root,24);
+  vCyl(3.55,4.5,0x9b5b37,-9,2.3,-30.7,root,24);
+  vRing(2.65,.16,0xff7d32,-9,.55,-30.7,root,2.0);
+  vBox(2.6,1.8,.45,0x6a3a29,-9,1.55,-28.55);
+  vRing(1.25,.10,0xffb43b,-9,1.0,-28.28,root,2.4);
+  // ชั้นภาชนะสองฝั่ง
+  shelf(-14,-33.0); shelf(-4,-33.0); potRow(-14, -32.5,4); potRow(-4,-32.5,4);
+  label('ดิน → ขึ้นรูป → ตากแห้ง → เผา',new THREE.Vector3(-9,5.0,-28.1),1.35);
+  vLantern(-15,3,-27,0xff8b3d);vLantern(-3,3,-27,0xff8b3d);
+
+  // 🕵️ DETECTIVE — กระดานคดีขนาดใหญ่ + โต๊ะสืบสวน
+  signBoard('🕵️ ห้องนักสืบ • DETECTIVE ROOM',10,5.8,-34.0,12,wood);
+  vBox(11.2,5.0,.30,0x68432e,10,3.0,-33.0);
+  vBox(10.4,4.25,.08,0xc79b62,10,3.0,-32.82);
+  const cards=[[-1.0,1.15,0xe7c56d],[-3.1,.15,0x9dc8e8],[1.1,.35,0xe7a4a4],[3.0,1.25,0xa9d6a7],[-2.0,-1.25,0xd6b1e8],[2.0,-1.15,0xf0c47a]];
+  cards.forEach((q,i)=>vBox(1.65,1.05,.06,q[2],10+q[0],3.0+q[1],-32.65));
+  // เส้นเชื่อมแบบไขว้
+  for(let i=0;i<5;i++) vBox(.06,.06,5.0,0xb43f35,8.0+i*.8,3.0,-32.55);
+  vBox(8.8,.75,2.6,0x6d452d,10,.62,-27.9);vBox(8.2,.14,2.25,0xc69a5d,10,1.05,-27.9);
+  vBox(2.0,.12,1.3,0x4b3a2c,7.0,1.18,-27.9);vBox(2.0,.12,1.3,0x4b3a2c,10,1.18,-27.9);vBox(2.0,.12,1.3,0x4b3a2c,13,1.18,-27.9);
+  label('ใคร?   ที่ไหน?   เมื่อไร?   ทำไม?',new THREE.Vector3(10,5.15,-32.65),1.25);
+  vLantern(4.5,3,-28,0xb08cff);vLantern(15.5,3,-28,0xb08cff);
+
+  // พืชและแท่นเล็ก ๆ ช่วยเชื่อมทุกห้องให้เป็นพิพิธภัณฑ์เดียวกัน
+  [[-34,11],[-20,11],[-34,-3],[-20,-3],[20,11],[34,11],[20,-3],[34,-3],[-15,-25],[-3,-25],[4,-25],[16,-25]].forEach(q=>vPlant(q[0],q[1],.8));
 }
+
+buildHeroScenes86();
 function buildHeroPolish89(){
   // EXCAVATION ROOM — deep archaeological trench, stratified soil and artifact table
   vBox(9.6,.20,6.8,0x70452f,-27,.02,15,root);
@@ -3126,8 +3245,8 @@ function buildHeroPolish89(){
   // subtle museum greenery around hero displays
   [[-32,11],[-22,11],[22,10],[32,10],[-32,-10],[32,-10],[-15,-26],[16,-26]].forEach(q=>vPlant(q[0],q[1],.85));
 }
-
 buildHeroPolish89();
+collectRoomFacadeWalls87(); updateRoomWalls87();
 
 let revealCabinet=null, revealCabinetHit=null, revealCabinetActive=false;
 function buildRevealCabinet(){
