@@ -2175,10 +2175,20 @@ function buildAtriumArchitecture84(){
   });
 }
 
-/* Prototype 8.7 — SMART TRANSPARENT ROOM WALLS
+/* Prototype 8.8 — TRANSPARENT ROOM WALLS FIXED
    ผนังห้องจะโปร่งใสเมื่อผู้เล่นเข้าไปอยู่ในห้องนั้น เพื่อมองเห็นตัวละคร/ฉากภายใน
    แต่ยังคงชนได้ตามเดิม และกลับมาทึบเมื่อออกจากห้อง */
 const roomWalls87=[];
+const roomVisualWalls87=[];
+function registerVisualWall87(mesh,roomIndex){
+  if(!mesh || !mesh.material) return mesh;
+  mesh.userData.roomWall87=true;
+  mesh.userData.roomIndex87=roomIndex;
+  mesh.userData.baseOpacity87=(mesh.material.opacity===undefined?1:mesh.material.opacity);
+  mesh.userData.baseTransparent87=!!mesh.material.transparent;
+  roomVisualWalls87.push(mesh);
+  return mesh;
+}
 function roomWall87(mesh,roomIndex){
   if(!mesh || !mesh.material) return mesh;
   mesh.userData.roomWall87=true;
@@ -2192,11 +2202,40 @@ function setRoomWall87(mesh,visibleInside){
   if(!mesh || !mesh.material) return;
   const m=mesh.material;
   m.transparent=visibleInside;
-  m.opacity=visibleInside?.18:(mesh.userData.baseOpacity87??1);
+  m.opacity=visibleInside?.10:(mesh.userData.baseOpacity87??1);
   m.depthWrite=!visibleInside;
+  m.depthTest=true;
+  if(visibleInside){
+    m.side=THREE.DoubleSide;
+    m.alphaTest=0;
+    if('roughness' in m) m.roughness=.8;
+  }
   if(m.needsUpdate!==undefined) m.needsUpdate=true;
 }
-const roomWallHint87=document.getElementById('roomWallHint87');
+function collectRoomFacadeWalls87(){
+  // 8.7 decorative facades were created as plain meshes, so they were not
+  // part of roomWalls87. Register the large facade panels as visual walls too.
+  const facades=[
+    {x:-27,z:15,i:0},{x:-27,z:-7,i:1},{x:27,z:15,i:2},{x:27,z:-7,i:3},
+    {x:-9,z:-28,i:4},{x:10,z:-28,i:5}
+  ];
+  root.traverse(o=>{
+    if(!o.isMesh || !o.material || o.userData.roomWall87) return;
+    const p=o.position;
+    // Large, vertical-ish box panels around the six room entrances/facades.
+    if(!o.geometry || !o.geometry.parameters) return;
+    const g=o.geometry.parameters;
+    const w=g.width||0,h=g.height||0,d=g.depth||0;
+    if(h<3.2) return;
+    for(const f of facades){
+      const near=Math.hypot(p.x-f.x,p.z-f.z);
+      if(near<5.5 && h>=3.5 && (w>=7 || d>=.25)){
+        registerVisualWall87(o,f.i);
+        break;
+      }
+    }
+  });
+}
 function updateRoomWalls87(){
   if(!playerPos || !roomWalls87.length) return;
   const rooms=[
@@ -2210,9 +2249,9 @@ function updateRoomWalls87(){
     if(Math.abs(playerPos.x-r.x)<=r.rx && Math.abs(playerPos.z-r.z)<=r.rz){active=i;break;}
   }
   roomWalls87.forEach(w=>setRoomWall87(w,w.userData.roomIndex87===active));
+  roomVisualWalls87.forEach(w=>setRoomWall87(w,w.userData.roomIndex87===active));
   if(roomWallHint87) roomWallHint87.style.display=active>=0?'block':'none';
 }
-
 
 function buildMuseum(){
   // GRAND MUSEUM 6.8 — โถงกลางเป็นพระเอก ห้องต่าง ๆ อยู่ด้านข้าง/ด้านหลัง
@@ -3145,6 +3184,7 @@ function buildHeroScenes86(){
 }
 
 buildHeroScenes86();
+collectRoomFacadeWalls87();
 updateRoomWalls87();
 
 let revealCabinet=null, revealCabinetHit=null, revealCabinetActive=false;
